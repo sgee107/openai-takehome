@@ -1,0 +1,19 @@
+[project]
+name = "takehome"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "pydantic-settings>=2.0.0",
+    "openai>=1.0.0",
+    "asyncpg>=0.29.0",
+    "pgvector>=0.3.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "minio>=7.2.0",
+    "datasets>=2.14.0",
+    "pandas>=2.0.0",
+    "tqdm>=4.66.0",
+]
