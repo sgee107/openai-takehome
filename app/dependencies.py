@@ -19,5 +19,5 @@ def get_minio_client() -> Minio:
     )
 
 
-OpenAIClient = Annotated[AsyncOpenAI, Depends(get_openai_client)]
-MinioClient = Annotated[Minio, Depends(get_minio_client)]
+# OpenAIClient = Annotated[AsyncOpenAI, Depends(get_openai_client)]
+# MinioClient = Annotated[Minio, Depends(get_minio_client)]

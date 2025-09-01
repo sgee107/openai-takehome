@@ -11,13 +11,15 @@ services:
       - ./app:/app/app
       - ./main.py:/app/main.py
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/chatdb
-      - MINIO_ENDPOINT=minio:9000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=chatdb
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
     env_file:
       - .env
     depends_on:
       - postgres
-      - minio
     networks:
       - app-network
 
@@ -31,7 +33,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -40,43 +41,8 @@ services:
     networks:
       - app-network
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - app-network
-
-  createbuckets:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb myminio/chat-storage || true;
-      /usr/bin/mc anonymous set public myminio/chat-storage;
-      exit 0;
-      "
-    networks:
-      - app-network
-
 volumes:
   postgres_data:
-  minio_data:
 
 networks:
   app-network:

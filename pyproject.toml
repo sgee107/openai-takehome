@@ -16,4 +16,23 @@ dependencies = [
     "datasets>=2.14.0",
     "pandas>=2.0.0",
     "tqdm>=4.66.0",
+    "click>=8.1.0",
+    "mlflow>=2.12.0",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.8.0",
+    "plotly>=5.18.0",
+    "greenlet>=3.2.4",
+]
+
+[project.scripts]
+takehome = "app.scripts.cli:data_loader"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
+    "pytest-benchmark>=4.0.0",
+    "memory-profiler>=0.61.0",
 ]

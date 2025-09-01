@@ -1,181 +1,92 @@
-import asyncio
-import logging
-from typing import List, Dict, Any, Optional
-from datasets import load_dataset
-from tqdm import tqdm
-from sqlalchemy.orm import Session
-from openai import OpenAI
-import time
-from datetime import datetime
+import json
+import urllib.request
+import os
 
-from app.database import SessionLocal, sync_engine
-from app.models import Review, Base
-from app.settings import settings
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-class DataLoader:
-    def __init__(
-        self,
-        batch_size: int = 100,
-        max_reviews: Optional[int] = None,
-        generate_embeddings: bool = True
-    ):
-        self.batch_size = batch_size
-        self.max_reviews = max_reviews
-        self.generate_embeddings = generate_embeddings
-        self.openai_client = OpenAI(api_key=settings.openai_api_key) if generate_embeddings else None
-        
-    def load_dataset(self):
-        """Load the Amazon Reviews dataset from Hugging Face"""
-        logger.info("Loading Amazon Reviews dataset from Hugging Face...")
-        dataset = load_dataset(
-            "McAuley-Lab/Amazon-Reviews-2023", 
-            "raw_review_All_Beauty", 
-            trust_remote_code=True
-        )
-        return dataset
+def download_and_process_fashion_data():
+    """
+    Download Amazon Fashion metadata from the provided Hugging Face URL
+    """
+    url = "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_Amazon_Fashion.jsonl"
+    local_file = "meta_Amazon_Fashion.jsonl"
     
-    def generate_embedding(self, text: str) -> Optional[List[float]]:
-        """Generate embedding for a text using OpenAI API"""
-        if not self.generate_embeddings or not text:
-            return None
-            
-        try:
-            # Limit text length to avoid token limits
-            text = text[:8000] if len(text) > 8000 else text
-            
-            response = self.openai_client.embeddings.create(
-                model="text-embedding-3-small",
-                input=text,
-                dimensions=1536
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            logger.warning(f"Failed to generate embedding: {e}")
-            return None
-    
-    def process_review(self, review_data: Dict[str, Any]) -> Review:
-        """Process a single review and create a Review object"""
-        # Combine title and text for embedding
-        review_text = ""
-        if review_data.get("title"):
-            review_text += review_data["title"] + " "
-        if review_data.get("text"):
-            review_text += review_data["text"]
+    # Download if not exists
+    if not os.path.exists(local_file):
+        print(f"Downloading Amazon Fashion metadata...")
+        print(f"URL: {url}")
+        print("This may take a while...")
         
-        # Generate embedding if enabled
-        embedding = None
-        if self.generate_embeddings and review_text:
-            embedding = self.generate_embedding(review_text)
-            # Add small delay to respect rate limits
-            time.sleep(0.1)
-        
-        # Create Review object
-        review = Review(
-            asin=review_data.get("asin"),
-            user_id=review_data.get("user_id"),
-            rating=float(review_data.get("rating")) if review_data.get("rating") else None,
-            title=review_data.get("title"),
-            text=review_data.get("text"),
-            parent_asin=review_data.get("parent_asin"),
-            timestamp=review_data.get("timestamp"),
-            helpful_vote=review_data.get("helpful_vote"),
-            verified_purchase=review_data.get("verified_purchase"),
-            embedding=embedding,
-            metadata={
-                "images": review_data.get("images"),
-                "loaded_at": datetime.utcnow().isoformat()
-            }
-        )
-        
-        return review
+        urllib.request.urlretrieve(url, local_file)
+        print(f"Downloaded to {local_file}")
+    else:
+        print(f"Using existing file: {local_file}")
     
-    def load_to_database(self, dataset):
-        """Load reviews into the PostgreSQL database"""
-        # Create tables if they don't exist
-        Base.metadata.create_all(bind=sync_engine)
-        
-        # Get the dataset split
-        reviews_data = dataset["full"]
-        total_reviews = len(reviews_data) if not self.max_reviews else min(self.max_reviews, len(reviews_data))
-        
-        logger.info(f"Loading {total_reviews} reviews into database...")
-        
-        session = SessionLocal()
-        batch = []
-        
-        try:
-            for i in tqdm(range(total_reviews), desc="Processing reviews"):
-                review_data = reviews_data[i]
-                review = self.process_review(review_data)
-                batch.append(review)
-                
-                # Commit batch when it reaches batch_size
-                if len(batch) >= self.batch_size:
-                    session.bulk_save_objects(batch)
-                    session.commit()
-                    logger.info(f"Committed batch of {len(batch)} reviews")
-                    batch = []
-            
-            # Commit remaining reviews
-            if batch:
-                session.bulk_save_objects(batch)
-                session.commit()
-                logger.info(f"Committed final batch of {len(batch)} reviews")
-                
-            logger.info(f"Successfully loaded {total_reviews} reviews into database")
-            
-        except Exception as e:
-            logger.error(f"Error loading data: {e}")
-            session.rollback()
-            raise
-        finally:
-            session.close()
+    # Read and process the data
+    print("\nReading first 300 items...")
     
-    def run(self):
-        """Main method to run the data loading process"""
-        try:
-            # Load dataset
-            dataset = self.load_dataset()
+    items = []
+    with open(local_file, 'r', encoding='utf-8') as f:
+        for i, line in enumerate(f):
+            if i >= 300:
+                break
             
-            # Display dataset info
-            logger.info(f"Dataset loaded successfully")
-            logger.info(f"Dataset info: {dataset}")
+            item = json.loads(line.strip())
+            items.append(item)
             
-            # Show sample review
-            if len(dataset["full"]) > 0:
-                logger.info(f"Sample review: {dataset['full'][0]}")
+            # Show progress
+            if (i + 1) % 50 == 0:
+                print(f"  Loaded {i + 1} items...")
             
-            # Load to database
-            self.load_to_database(dataset)
-            
-        except Exception as e:
-            logger.error(f"Data loading failed: {e}")
-            raise
-
-
-def main():
-    """Main entry point for the data loader script"""
-    import argparse
+            # Show structure of first 5 items
+            if i < 5:
+                print(f"\nItem {i + 1}:")
+                print("-" * 40)
+                for key, value in item.items():
+                    if isinstance(value, (list, dict)):
+                        print(f"{key}: {type(value).__name__} with {len(value) if hasattr(value, '__len__') else 'N/A'} items")
+                        if isinstance(value, list) and len(value) > 0:
+                            sample = str(value[0])[:80] + "..." if len(str(value[0])) > 80 else str(value[0])
+                            print(f"  Sample: {sample}")
+                    else:
+                        display_val = str(value)[:80] + "..." if value and len(str(value)) > 80 else str(value)
+                        print(f"{key}: {display_val}")
     
-    parser = argparse.ArgumentParser(description="Load Amazon Reviews into PostgreSQL database")
-    parser.add_argument("--batch-size", type=int, default=100, help="Batch size for database inserts")
-    parser.add_argument("--max-reviews", type=int, default=None, help="Maximum number of reviews to load")
-    parser.add_argument("--no-embeddings", action="store_true", help="Skip generating embeddings")
+    print(f"\nTotal items loaded: {len(items)}")
     
-    args = parser.parse_args()
+    # Save to JSON
+    output_file = "amazon_fashion_sample.json"
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(items, f, indent=2, ensure_ascii=False)
     
-    loader = DataLoader(
-        batch_size=args.batch_size,
-        max_reviews=args.max_reviews,
-        generate_embeddings=not args.no_embeddings
-    )
+    print(f"Saved to {output_file}")
     
-    loader.run()
-
+    # Also save as JSONL
+    output_file_jsonl = "amazon_fashion_sample.jsonl"
+    with open(output_file_jsonl, 'w', encoding='utf-8') as f:
+        for item in items:
+            f.write(json.dumps(item, ensure_ascii=False) + '\n')
+    
+    print(f"Also saved to {output_file_jsonl}")
+    
+    # Show summary
+    if items:
+        print("\n" + "=" * 80)
+        print("Data structure summary:")
+        print(f"Fields: {list(items[0].keys())}")
+        print(f"Number of fields per item: {len(items[0])}")
+    
+    return items
 
 if __name__ == "__main__":
-    main()
+    print("=" * 80)
+    print("Amazon Fashion Metadata Downloader")
+    print("=" * 80)
+    
+    items = download_and_process_fashion_data()
+    
+    if items:
+        print("\n✓ Success! Loaded and saved 300 Amazon Fashion metadata items")
+        print("\nFiles created:")
+        print("  - amazon_fashion_sample.json (JSON format)")
+        print("  - amazon_fashion_sample.jsonl (JSONL format)")
+    else:
+        print("\n✗ Failed to load data")
