@@ -9,6 +9,8 @@ import os
 from typing import Optional, Any, Dict
 from contextlib import contextmanager
 from functools import wraps
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from app.settings import settings
 
@@ -42,18 +44,61 @@ class MLflowClient:
             mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
             
             # Set up S3/MinIO environment for artifacts
-            os.environ.setdefault("MLFLOW_S3_ENDPOINT_URL", f"http://{settings.minio_endpoint}")
+            protocol = "https" if settings.minio_secure else "http"
+            os.environ.setdefault("MLFLOW_S3_ENDPOINT_URL", f"{protocol}://{settings.minio_endpoint}")
             os.environ.setdefault("AWS_ACCESS_KEY_ID", settings.minio_access_key)
             os.environ.setdefault("AWS_SECRET_ACCESS_KEY", settings.minio_secret_key)
+            
+            # Create MinIO bucket if needed
+            self._ensure_bucket_exists()
             
             # Test connection
             mlflow.get_tracking_uri()
             self._enabled = True
+            
+            # Set default experiment if specified
+            if settings.mlflow_experiment:
+                self.set_experiment(settings.mlflow_experiment)
+            
             print("✅ MLflow client initialized successfully")
             
         except Exception as e:
             print(f"⚠️  MLflow unavailable (optional): {e}")
             self._enabled = False
+    
+    def _ensure_bucket_exists(self):
+        """Ensure the MinIO bucket exists for MLflow artifacts."""
+        try:
+            # Create S3 client for MinIO
+            protocol = "https" if settings.minio_secure else "http"
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=f"{protocol}://{settings.minio_endpoint}",
+                aws_access_key_id=settings.minio_access_key,
+                aws_secret_access_key=settings.minio_secret_key,
+                region_name='us-east-1'  # MinIO doesn't use regions but boto3 requires it
+            )
+            
+            bucket_name = settings.minio_bucket_name
+            
+            # Check if bucket exists
+            try:
+                s3_client.head_bucket(Bucket=bucket_name)
+                print(f"  ✓ MinIO bucket '{bucket_name}' exists")
+            except ClientError as e:
+                if e.response['Error']['Code'] == '404':
+                    # Bucket doesn't exist, create it
+                    print(f"  → Creating MinIO bucket '{bucket_name}'...")
+                    s3_client.create_bucket(Bucket=bucket_name)
+                    print(f"  ✓ MinIO bucket '{bucket_name}' created")
+                else:
+                    raise
+                    
+        except (NoCredentialsError, ClientError) as e:
+            print(f"  ⚠️  Could not ensure MinIO bucket exists: {e}")
+            # Don't fail initialization - MLflow can still work without artifacts
+        except Exception as e:
+            print(f"  ⚠️  MinIO bucket check failed: {e}")
     
     def _safe_call(self, func, *args, **kwargs):
         """Safely call MLflow function, returning None if disabled."""
@@ -80,7 +125,7 @@ class MLflowClient:
             pass
         
         # Create new experiment
-        artifact_location = artifact_location or "s3://mlflow-artifacts/experiments"
+        artifact_location = artifact_location or f"s3://{settings.minio_bucket_name}/mlflow-artifacts/experiments"
         experiment_id = self._safe_call(mlflow.create_experiment, name, artifact_location)
         if experiment_id:
             self._current_experiment = experiment_id
@@ -108,9 +153,11 @@ class MLflowClient:
             yield None
             return
         
-        # Set experiment if provided
+        # Set experiment - use provided name, or default from settings, or MLflow's default
         if experiment_name:
             self.set_experiment(experiment_name)
+        elif settings.mlflow_experiment and not self._current_experiment:
+            self.set_experiment(settings.mlflow_experiment)
         
         try:
             with mlflow.start_run(run_name=run_name):

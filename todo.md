@@ -9,35 +9,28 @@
 - [x] Docker Compose setup with pgvector/pgvector:pg16
 
 ### Required Setup Tasks - MVP Approach
-- [x] **Phase 0.1: Core Infrastructure**
-  - [x] Add MinIO service to docker-compose-dev.yml (if not already there)
+- [x] **Phase 0.1: Core Infrastructure** ✅ MOSTLY COMPLETE
+  - [x] Add MinIO service to docker-compose-dev.yml 
   - [x] MLflow setup - using simplified approach:
     - [x] MLflow already added as dependency in pyproject.toml
-    - [x] Created test script to verify MLflow tracking works locally
+    - [x] Created MLflow client (app/mlflow_client.py)
     - [x] Verified MLflow UI works (runs on http://127.0.0.1:5000)
     - [ ] Add MLflow service to docker-compose-dev.yml (optional for production)
   - [x] Update app settings.py with MLflow client configuration
-  - [ ] Verify pgvector extension is enabled in database
-  - [x] Add MinIO bucket auto-create in data loader CLI
-- [ ] Install core dependencies:
-  - [x] numpy for vector operations
-  - [x] scikit-learn for PCA (reduce 1536D → 2D/3D for visualization)
-  - [x] matplotlib/plotly for creating interactive plots
-  - [x] UMAP-learn for embedding space visualization:
-    - **Why UMAP?** Better than t-SNE for preserving global structure
-    - **Visualizations it enables:**
-      - 2D/3D scatter plots of your 300 products colored by category
-      - Cluster identification (are shoes grouping together?)
-      - Query-result paths (visualize search trajectory)
-      - Before/after preprocessing comparisons
-      - Outlier detection (products far from others)
-- [ ] Add testing dependencies:
+  - [ ] ⚠️ Verify pgvector extension is enabled in database (CREATE EXTENSION IF NOT EXISTS vector)
+  - [x] Data loader creates MinIO bucket if needed
+- [x] Install core dependencies: ✅ COMPLETE
+  - [x] numpy for vector operations (in use)
+  - [x] scikit-learn for PCA (imported in semantic metrics)
+  - [x] matplotlib for plots (used in distribution.py)
+  - [ ] ⚠️ UMAP-learn for embedding space visualization (not yet installed)
+- [x] Add testing dependencies:
   - [x] pytest-benchmark for performance testing
   - [x] memory-profiler for memory usage tracking
-- [ ] Configure OpenAI embedding model:
-  - [ ] OpenAI text-embedding-3-small (1536 dims) - primary model
-  - [ ] API key already configured in .env ✅
-  - [ ] Add retry logic for API calls
+- [x] Configure OpenAI embedding model: ✅ COMPLETE
+  - [x] OpenAI text-embedding-3-small (1536 dims) implemented
+  - [x] API key configured in .env
+  - [ ] ⚠️ Add retry logic for API calls (nice to have)
 - [x] Set up experiment tracking with MLflow:
   - **Why MLflow?** Track experiments across different preprocessing strategies
   - **What it provides:**
@@ -65,7 +58,7 @@
       
   - **Current Status:** ✅ MLflow working locally with file-based tracking
 
-- [ ] **Phase 0.2: MVP Validation Script**
+- [ ] **Phase 0.2: MVP Validation Script** ⚠️ NOT IMPLEMENTED
   - [ ] Create `scripts/validate_setup.py` that tests:
     - [ ] **PostgreSQL connection**: Can connect to database
     - [ ] **pgvector extension**: `CREATE EXTENSION IF NOT EXISTS vector`
@@ -76,65 +69,66 @@
   - [ ] Script outputs: ✅ PASS / ❌ FAIL for each component
   - [ ] **Run with**: `python scripts/validate_setup.py`
 
-- [ ] **Phase 0.3: Baseline Data Pipeline**
-  - [ ] Create `scripts/baseline_test.py` that:
-    - [ ] Loads first 5 products from JSON data
-    - [ ] Tests both simple concatenation and one enrichment strategy
-    - [ ] Generates embeddings (normalized and non-normalized)
-    - [ ] Stores in database with different table names
-    - [ ] Creates MLflow experiment with basic metrics
-    - [ ] Generates simple UMAP plot and logs as artifact
-  - [ ] **Success criteria**: 5 products processed, 2 embedding strategies, 1 UMAP plot in MLflow
-  - **UMAP Integration with MLflow:**
-    - [ ] Generate UMAP plots as matplotlib/plotly artifacts
-    - [ ] Log plots as MLflow artifacts (PNG/HTML files)
-    - [ ] Tag experiments with preprocessing strategy for filtering
-    - [ ] Create custom metrics for cluster quality
-  - **Preprocessing Tagging Strategy:**
-    - [ ] `preprocessing_strategy`: "simple_concat" | "image_enriched" | "llm_expanded" 
-    - [ ] `normalization`: "l2_normalized" | "raw"
-    - [ ] `fields_used`: "title_desc_features" | "title_only" | etc.
-    - [ ] `image_analysis`: true/false
-    - [ ] `llm_expansion`: true/false
-    - [ ] `embedding_model`: "text-embedding-3-small"
-  - **Dependencies Note:**
-    - MLflow has built-in plotting but matplotlib/plotly still needed for UMAP
-    - MLflow can display custom plots but you create them with matplotlib/plotly
-    - Both libraries work together: you generate → MLflow stores & displays
-- [ ] Initialize database schema variations:
-  - [ ] Create migration for multiple embedding table schemas
-  - [ ] Add indexes for vector similarity search
+- [x] **Phase 0.3: Baseline Data Pipeline** ✅ FUNCTIONALITY EXISTS
+  - **Note**: Instead of `baseline_test.py`, we have comprehensive implementations:
+    - [x] `scripts/data_loader.py`: Full data loader with 5 embedding strategies
+    - [x] `scripts/load_products.py`: Product loader with TextStrategy class
+    - [x] Multiple text strategies already implemented:
+      - title_only
+      - title_features  
+      - title_category_store
+      - title_details
+      - comprehensive (all_text)
+    - [x] Database schema with pgvector support
+    - [x] HNSW index for similarity search
+  - [ ] ⚠️ Still need to add:
+    - [ ] L2 normalization option for embeddings (don't need, don't do)
+    - [ ] UMAP visualization generation
+    - [ ] Integration with MLflow experiments for baseline metrics
 
-## Phase 0.4: Embedding Strategy Experiments (NEW - Active)
-### Experiment Design
-Our data loader already supports 5 text strategies. Let's systematically test them with MLflow tracking.
+## Phase 0.4: Embedding Strategy Experiments ✅ MOSTLY COMPLETE
 
-### Module Structure
+### Current Implementation Status
+The experiments module is already implemented with most core functionality:
+
 ```
 experiments/
-├── __init__.py
-├── base.py                    # Base experiment class with MLflow integration
+├── __init__.py ✅
+├── base.py ✅                   # Base experiment class with MLflow integration
+├── run_experiments.py ✅         # Main CLI to run experiments
 ├── runners/
-│   ├── __init__.py
-│   ├── embedding_strategy.py  # Strategy comparison experiment
-│   ├── normalization.py       # Future: L2 norm experiments
-│   └── retrieval_quality.py   # Future: Search quality tests
+│   ├── __init__.py ✅
+│   ├── embedding_strategy.py ✅  # Strategy comparison experiment (IMPLEMENTED)
+│   ├── normalization.py ❌       # Future: L2 norm experiments
+│   └── retrieval_quality.py ❌   # Future: Search quality tests
 ├── metrics/
-│   ├── __init__.py
-│   ├── semantic.py            # Semantic quality metrics (clustering, similarity)
-│   ├── performance.py         # Performance metrics (latency, throughput)
-│   └── storage.py             # Storage efficiency metrics
+│   ├── __init__.py ✅
+│   ├── semantic.py ✅           # Semantic quality metrics (IMPLEMENTED)
+│   ├── performance.py ❌        # Performance metrics (TODO)
+│   └── storage.py ❌            # Storage efficiency metrics (TODO)
 ├── visualizations/
-│   ├── __init__.py
-│   ├── umap_plots.py          # UMAP embedding space visualization
-│   ├── distribution.py        # Text length, token distributions
-│   └── comparison.py          # Strategy comparison charts
-├── utils/
-│   ├── __init__.py
-│   ├── data_loader.py         # Load consistent test datasets
-│   └── sampling.py            # Sample selection for experiments
-└── run_experiments.py         # Main CLI to run experiments
+│   ├── __init__.py ✅
+│   ├── distribution.py ✅       # Text length distributions (IMPLEMENTED)
+│   ├── umap_plots.py ❌         # UMAP embedding space visualization (TODO)
+│   └── comparison.py ❌         # Strategy comparison charts (TODO)
+└── debug.py ✅                  # Debug utilities
 ```
+
+### What's Already Working:
+- ✅ CLI interface: `python -m app.experiments.run_experiments --experiment strategy`
+- ✅ Compares all 5 text strategies with MLflow tracking
+- ✅ Generates embeddings and saves to database (optional)
+- ✅ Tracks metrics: time, text length, failures
+- ✅ Creates text length distribution visualizations
+- ✅ Calculates semantic quality metrics (clustering, similarity)
+- ✅ Saves artifacts to MLflow
+
+### What's Still Needed:
+- [ ] Token count analysis using tiktoken
+- [ ] UMAP visualizations of embedding space
+- [ ] Performance profiling (memory, latency)
+- [ ] L2 normalization experiments
+- [ ] Storage efficiency analysis
 
 ### Implementation Plan
 
@@ -193,7 +187,43 @@ class EmbeddingStrategyExperiment(BaseExperiment):
 
 #### **4. Visualization Utilities (experiments/visualizations/)**
 - **umap_plots.py**: Generate UMAP plots colored by category, strategy
-- **distribution.py**: Text length histograms, token count distributions
+- **distribution.py**: 
+  - [ ] **Token Count Histograms**:
+    - [ ] Create histograms for each embedding strategy showing token distribution
+    - [ ] Compare token counts across strategies (title_only vs comprehensive)
+    - [ ] Identify optimal token ranges (sweet spot: 100-500 tokens)
+    - [ ] Flag products with extremely low (<50) or high (>1000) token counts
+  - [ ] **Text Length Analysis**:
+    - [ ] Character count distributions
+    - [ ] Word count distributions
+    - [ ] Correlation between text length and embedding quality
+  - [ ] **Token Count Estimation**:
+    ```python
+    def estimate_tokens(text: str) -> int:
+        # Rough estimation: 1 token ≈ 0.75 words
+        word_count = len(text.split())
+        return int(word_count / 0.75)
+    
+    def create_token_histogram(products: List[Dict], strategy: str):
+        token_counts = []
+        for product in products:
+            text = generate_text_for_strategy(product, strategy)
+            tokens = estimate_tokens(text)
+            token_counts.append(tokens)
+        
+        # Create histogram
+        plt.figure(figsize=(10, 6))
+        plt.hist(token_counts, bins=50, alpha=0.7)
+        plt.axvline(x=100, color='r', linestyle='--', label='Min optimal')
+        plt.axvline(x=500, color='r', linestyle='--', label='Max optimal')
+        plt.xlabel('Estimated Token Count')
+        plt.ylabel('Number of Products')
+        plt.title(f'Token Distribution for {strategy} Strategy')
+        plt.legend()
+        
+        # Log to MLflow
+        mlflow.log_figure(plt.gcf(), f"token_histogram_{strategy}.png")
+    ```
 - **comparison.py**: Side-by-side strategy comparisons, radar charts
 
 #### **5. Main Runner Script (experiments/run_experiments.py)**
@@ -222,62 +252,42 @@ async def run_experiment(experiment, num_products, strategies):
 4. **title_details** - Title + key product details (Brand, Material, Style, etc.)
 5. **comprehensive** - Everything: title + brand + category + features + details + description
 
-### Implementation Steps
-- [ ] **Step 1: Create Experiments Module Structure**
-  - [ ] Create experiments/ directory at project root
-  - [ ] Implement base.py with BaseExperiment class
-  - [ ] Set up runners/ with embedding_strategy.py
-  - [ ] Create metrics/ modules (semantic, performance, storage)
-  - [ ] Build visualizations/ utilities
-  - [ ] Add run_experiments.py CLI
+### Remaining Implementation Tasks
 
-- [ ] **Step 2: Implement Base Experiment Framework**
-  - [ ] BaseExperiment with MLflow lifecycle (setup, run, cleanup)
-  - [ ] Automatic metric logging with batching
-  - [ ] Artifact management (save plots, JSONs, CSVs)
-  - [ ] Error handling and recovery
-  - [ ] Progress tracking and logging
+- [x] **Step 1-2: Module Structure & Base Framework** ✅ COMPLETE
+  - Module structure created
+  - BaseExperiment class implemented with MLflow integration
+  - CLI interface working
 
-- [ ] **Step 3: Build Embedding Strategy Experiment**
-  - [ ] Load consistent 50-product test dataset
-  - [ ] For each strategy:
-    - [ ] Generate embeddings using existing TextStrategy methods
-    - [ ] Track: generation time, text length, token estimates
-    - [ ] Store embeddings in separate tables (strategy-specific)
-    - [ ] Log samples to MLflow
-  - [ ] Generate comparison artifacts:
-    - [ ] Text length distribution plots
-    - [ ] Generation time comparisons
-    - [ ] Sample text examples
+- [x] **Step 3: Embedding Strategy Experiment** ✅ MOSTLY COMPLETE
+  - Loads products (default 300, configurable)
+  - Generates embeddings for all strategies
+  - Tracks metrics and saves to MLflow
+  - Missing: Token count analysis with tiktoken
 
-- [ ] **Step 4: Add Semantic Quality Metrics**
-  - [ ] Implement semantic.py:
-    - [ ] Cosine similarity calculations
-    - [ ] Intra-category clustering metrics
-    - [ ] Nearest neighbor accuracy
-  - [ ] For each strategy:
-    - [ ] Calculate average similarity within categories
-    - [ ] Find k-nearest neighbors for sample products
-    - [ ] Measure clustering quality (silhouette score)
-  - [ ] Generate UMAP visualizations per strategy
+- [x] **Step 4: Semantic Quality Metrics** ✅ COMPLETE
+  - Cosine similarity calculations implemented
+  - Intra-category clustering metrics working
+  - Missing: UMAP visualizations
 
-- [ ] **Step 5: Performance & Storage Analysis**
-  - [ ] Implement performance.py:
-    - [ ] Query latency testing
-    - [ ] Batch processing throughput
-    - [ ] Memory profiling
-  - [ ] Implement storage.py:
-    - [ ] Database size per strategy
-    - [ ] Index size comparisons
-    - [ ] Compression ratios
-  - [ ] Create comparison dashboard
+- [ ] **Step 5: Performance & Storage Analysis** ⚠️ NOT IMPLEMENTED
+  - [ ] Create performance.py module
+  - [ ] Create storage.py module
+  - [ ] Add memory profiling
+  - [ ] Database size analysis
 
-- [ ] **Step 6: Run Full Experiment Suite**
-  - [ ] Execute: `python experiments/run_experiments.py --experiment strategy --num-products 50`
-  - [ ] Verify all metrics logged to MLflow
-  - [ ] Check artifacts generated (plots, reports)
-  - [ ] Review MLflow UI for comparison
-  - [ ] Generate final recommendations
+- [ ] **Step 6: Enhanced Features** ⚠️ PARTIALLY COMPLETE
+  - [x] Can run experiments with: `python -m app.experiments.run_experiments --experiment strategy`
+  - [ ] Add token count analysis
+  - [ ] Add UMAP visualizations
+  - [ ] Create comprehensive comparison dashboard
+
+### Next Priority Tasks:
+1. [ ] Install tiktoken and add token count analysis to embedding_strategy.py
+2. [ ] Install umap-learn and create UMAP visualizations
+3. [ ] Implement performance.py and storage.py modules
+4. [ ] Add L2 normalization option to experiments
+5. [ ] Create validate_setup.py script for Phase 0.2
 
 ### Success Metrics
 - [ ] All 5 strategies tested on same product set
@@ -313,6 +323,40 @@ async def run_experiment(experiment, num_products, strategies):
   - [ ] `--preprocessing-strategy`: Choose enrichment approach
 
 ### Agentic Preprocessing Strategies
+- [ ] **Context and Synonym Injection**
+  - [ ] **Structured Attribute Expansion**:
+    - [ ] Transform: "Blue Cotton T-Shirt" → "Blue Cotton T-Shirt. Color: blue. Material: cotton. Type: t-shirt, casual wear, top, clothing"
+    - [ ] Add hierarchical categories: "Clothing > Men's > Tops > T-Shirts > Casual"
+    - [ ] Include style descriptors: "casual, everyday, comfortable, relaxed fit"
+  - [ ] **Synonym Enrichment**:
+    - [ ] Build domain-specific synonym mappings:
+      - [ ] "Jeans" → "jeans, denim, pants, trousers, bottoms, denims"
+      - [ ] "Sneakers" → "sneakers, trainers, athletic shoes, sports shoes, tennis shoes, kicks"
+      - [ ] "Jacket" → "jacket, coat, outerwear, layer, top layer"
+    - [ ] Context-aware synonyms (e.g., "running shoes" vs "dress shoes")
+  - [ ] **Use Case and Occasion Injection**:
+    - [ ] Add contextual usage: "suitable for: casual wear, lounging, layering, weekend activities"
+    - [ ] Season mapping: "spring, summer, all-season, warm weather"
+    - [ ] Activity mapping: "gym, running, hiking, casual office, date night"
+  - [ ] **Template-Based Augmentation**:
+    ```python
+    def augment_product_text(product):
+        template = f"""
+        {product['title']}. 
+        Category: {product['category']}. 
+        Type: {extract_product_type(product)}. 
+        Style: {product.get('style', 'casual')}. 
+        Material: {extract_materials(product)}. 
+        Features: {', '.join(product.get('features', []))}. 
+        Colors: {extract_colors(product)}. 
+        Suitable for: {generate_use_cases(product)}.
+        Season: {determine_season(product)}.
+        Similar to: {', '.join(find_similar_items(product))}.
+        Synonyms: {', '.join(generate_synonyms(product))}.
+        """
+        return template
+    ```
+
 - [ ] **Image-Enriched Embeddings**
   - [ ] Use GPT-4V or similar to analyze product images
   - [ ] Extract visual attributes not in metadata:
@@ -320,9 +364,35 @@ async def run_experiment(experiment, num_products, strategies):
     - [ ] Fit type (slim, regular, loose)
     - [ ] Material appearance (shiny, matte, textured)
     - [ ] Design details (buttons, zippers, patterns)
+    - [ ] Pattern recognition (stripes, polka dots, floral, geometric)
+    - [ ] Style classification (vintage, modern, classic, trendy)
+  - [ ] **Multi-Image Analysis**:
+    - [ ] Analyze all available product images (main + variants)
+    - [ ] Extract angle-specific details (front buttons, back pockets, side zippers)
+    - [ ] Identify color variations across images
+    - [ ] Detect styling suggestions from lifestyle images
+  - [ ] **Visual-to-Text Generation Pipeline**:
+    ```python
+    async def extract_image_features(image_urls: List[str]) -> Dict:
+        features = {
+            'primary_colors': [],
+            'patterns': [],
+            'style_attributes': [],
+            'material_appearance': [],
+            'design_details': [],
+            'fit_type': None,
+            'occasions': []
+        }
+        # Process each image
+        for url in image_urls:
+            image_analysis = await analyze_with_vision_model(url)
+            features = merge_features(features, image_analysis)
+        return features
+    ```
   - [ ] Generate descriptive text from images
   - [ ] Combine with existing metadata for richer embeddings
   - [ ] Store image descriptions separately for analysis
+  - [ ] Create confidence scores for visual attributes
 
 - [ ] **Context-Aware Text Generation**
   - [ ] Use LLM to expand product descriptions:

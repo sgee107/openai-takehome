@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.settings import settings
-from app.chat import router as chat_router
-from app.chat_simple import router as simple_router
+from app.api.chat import router as chat_router
+from app.api.chat_simple import router as simple_router
 from app.db.database import init_db, async_engine
 
 
@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Takehome API",
+    title="Fashion API",
     version="0.1.0",
     lifespan=lifespan
 )

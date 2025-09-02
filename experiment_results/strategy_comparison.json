@@ -1,0 +1,219 @@
+{
+  "strategies": {
+    "title_only": {
+      "strategy": "title_only",
+      "total_time": 15.89182186126709,
+      "avg_time_per_product": 0.3178364372253418,
+      "avg_time_per_batch": 5.297197739283244,
+      "text_length_mean": 97.18,
+      "text_length_std": 36.045909615378,
+      "text_length_min": 16,
+      "text_length_max": 207,
+      "text_length_median": 90.0,
+      "token_count_mean": 23.66,
+      "token_count_std": 8.514951555939705,
+      "token_count_min": 4,
+      "token_count_max": 52,
+      "token_count_median": 22.0,
+      "num_embeddings": 50,
+      "embedding_dimension": 1536,
+      "failed_embeddings": 0,
+      "products_saved_to_db": 0,
+      "embeddings_saved_to_db": 0
+    },
+    "title_features": {
+      "strategy": "title_features",
+      "total_time": 10.856616020202637,
+      "avg_time_per_product": 0.21713232040405273,
+      "avg_time_per_batch": 3.618803342183431,
+      "text_length_mean": 142.84,
+      "text_length_std": 122.99436735070431,
+      "text_length_min": 50,
+      "text_length_max": 767,
+      "text_length_median": 108.0,
+      "token_count_mean": 34.32,
+      "token_count_std": 30.39107763801738,
+      "token_count_min": 12,
+      "token_count_max": 200,
+      "token_count_median": 26.5,
+      "num_embeddings": 50,
+      "embedding_dimension": 1536,
+      "failed_embeddings": 0,
+      "products_saved_to_db": 0,
+      "embeddings_saved_to_db": 0
+    },
+    "title_category_store": {
+      "strategy": "title_category_store",
+      "total_time": 8.750241756439209,
+      "avg_time_per_product": 0.17500483512878418,
+      "avg_time_per_batch": 2.9167045752207437,
+      "text_length_mean": 137.48,
+      "text_length_std": 36.30825801384583,
+      "text_length_min": 59,
+      "text_length_max": 247,
+      "text_length_median": 130.0,
+      "token_count_mean": 35.44,
+      "token_count_std": 8.795817187731904,
+      "token_count_min": 15,
+      "token_count_max": 62,
+      "token_count_median": 35.0,
+      "num_embeddings": 50,
+      "embedding_dimension": 1536,
+      "failed_embeddings": 0,
+      "products_saved_to_db": 0,
+      "embeddings_saved_to_db": 0
+    },
+    "title_details": {
+      "strategy": "title_details",
+      "total_time": 6.6975929737091064,
+      "avg_time_per_product": 0.13395185947418212,
+      "avg_time_per_batch": 2.232494274775187,
+      "text_length_mean": 117.64,
+      "text_length_std": 33.37709394180386,
+      "text_length_min": 54,
+      "text_length_max": 228,
+      "text_length_median": 115.0,
+      "token_count_mean": 29.74,
+      "token_count_std": 8.153060774948266,
+      "token_count_min": 13,
+      "token_count_max": 52,
+      "token_count_median": 29.0,
+      "num_embeddings": 50,
+      "embedding_dimension": 1536,
+      "failed_embeddings": 0,
+      "products_saved_to_db": 0,
+      "embeddings_saved_to_db": 0
+    },
+    "comprehensive": {
+      "strategy": "comprehensive",
+      "total_time": 13.00565791130066,
+      "avg_time_per_product": 0.26011315822601316,
+      "avg_time_per_batch": 4.335196256637573,
+      "text_length_mean": 167.44,
+      "text_length_std": 71.5455547186546,
+      "text_length_min": 92,
+      "text_length_max": 519,
+      "text_length_median": 147.5,
+      "token_count_mean": 42.62,
+      "token_count_std": 19.36377029403107,
+      "token_count_min": 21,
+      "token_count_max": 150,
+      "token_count_median": 37.0,
+      "num_embeddings": 50,
+      "embedding_dimension": 1536,
+      "failed_embeddings": 0,
+      "products_saved_to_db": 0,
+      "embeddings_saved_to_db": 0
+    }
+  },
+  "rankings": {
+    "text_length_mean": [
+      {
+        "rank": 1,
+        "strategy": "title_only",
+        "value": 97.18
+      },
+      {
+        "rank": 2,
+        "strategy": "title_details",
+        "value": 117.64
+      },
+      {
+        "rank": 3,
+        "strategy": "title_category_store",
+        "value": 137.48
+      },
+      {
+        "rank": 4,
+        "strategy": "title_features",
+        "value": 142.84
+      },
+      {
+        "rank": 5,
+        "strategy": "comprehensive",
+        "value": 167.44
+      }
+    ],
+    "token_count_mean": [
+      {
+        "rank": 1,
+        "strategy": "title_only",
+        "value": 23.66
+      },
+      {
+        "rank": 2,
+        "strategy": "title_details",
+        "value": 29.74
+      },
+      {
+        "rank": 3,
+        "strategy": "title_features",
+        "value": 34.32
+      },
+      {
+        "rank": 4,
+        "strategy": "title_category_store",
+        "value": 35.44
+      },
+      {
+        "rank": 5,
+        "strategy": "comprehensive",
+        "value": 42.62
+      }
+    ],
+    "total_time": [
+      {
+        "rank": 1,
+        "strategy": "title_details",
+        "value": 6.6975929737091064
+      },
+      {
+        "rank": 2,
+        "strategy": "title_category_store",
+        "value": 8.750241756439209
+      },
+      {
+        "rank": 3,
+        "strategy": "title_features",
+        "value": 10.856616020202637
+      },
+      {
+        "rank": 4,
+        "strategy": "comprehensive",
+        "value": 13.00565791130066
+      },
+      {
+        "rank": 5,
+        "strategy": "title_only",
+        "value": 15.89182186126709
+      }
+    ],
+    "failed_embeddings": [
+      {
+        "rank": 1,
+        "strategy": "title_only",
+        "value": 0
+      },
+      {
+        "rank": 2,
+        "strategy": "title_features",
+        "value": 0
+      },
+      {
+        "rank": 3,
+        "strategy": "title_category_store",
+        "value": 0
+      },
+      {
+        "rank": 4,
+        "strategy": "title_details",
+        "value": 0
+      },
+      {
+        "rank": 5,
+        "strategy": "comprehensive",
+        "value": 0
+      }
+    ]
+  }
+}

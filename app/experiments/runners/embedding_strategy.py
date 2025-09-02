@@ -8,6 +8,7 @@ import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
+import tiktoken
 
 from app.experiments.base import BaseExperiment
 from app.scripts.load_products import TextStrategy, EmbeddingGenerator, ProductLoader
@@ -82,8 +83,12 @@ class EmbeddingStrategyExperiment(BaseExperiment):
         strategy_func = ProductLoader.STRATEGIES[strategy]
         embedding_generator = EmbeddingGenerator()
         
+        # Initialize tiktoken encoder for OpenAI embeddings
+        encoder = tiktoken.encoding_for_model("gpt-3.5-turbo")  # Similar tokenizer to embedding models
+        
         # Metrics for this strategy
         text_lengths = []
+        token_counts = []
         generation_times = []
         embeddings = []
         sample_texts = []
@@ -107,13 +112,18 @@ class EmbeddingStrategyExperiment(BaseExperiment):
                 texts.append(text)
                 text_lengths.append(len(text))
                 
+                # Count tokens
+                tokens = encoder.encode(text)
+                token_counts.append(len(tokens))
+                
                 # Save samples
                 if len(sample_texts) < 10:
                     sample_texts.append({
                         "title": product_data.get('title', 'Unknown')[:100],
                         "strategy": strategy,
                         "text": text[:500],  # First 500 chars
-                        "full_length": len(text)
+                        "full_length": len(text),
+                        "token_count": len(tokens)
                     })
                 
                 # Store product data and text for DB saving
@@ -211,6 +221,11 @@ class EmbeddingStrategyExperiment(BaseExperiment):
             "text_length_min": min(text_lengths),
             "text_length_max": max(text_lengths),
             "text_length_median": np.median(text_lengths),
+            "token_count_mean": np.mean(token_counts),
+            "token_count_std": np.std(token_counts),
+            "token_count_min": min(token_counts),
+            "token_count_max": max(token_counts),
+            "token_count_median": np.median(token_counts),
             "num_embeddings": len(embeddings),
             "embedding_dimension": len(embeddings[0]) if embeddings else 0,
             "failed_embeddings": len(self.products) - len(embeddings),
@@ -233,6 +248,16 @@ class EmbeddingStrategyExperiment(BaseExperiment):
             "max": results["text_length_max"]
         }, f"{strategy}_text_lengths.json")
         
+        # Save token count distribution
+        await self.save_artifact({
+            "counts": token_counts,
+            "mean": results["token_count_mean"],
+            "std": results["token_count_std"],
+            "min": results["token_count_min"],
+            "max": results["token_count_max"],
+            "median": results["token_count_median"]
+        }, f"{strategy}_token_counts.json")
+        
         # Store embeddings as numpy array for later analysis
         if embeddings:
             embeddings_array = np.array(embeddings)
@@ -245,6 +270,8 @@ class EmbeddingStrategyExperiment(BaseExperiment):
         
         print(f"  ✅ Strategy {strategy} completed in {total_time:.2f}s")
         print(f"     Avg text length: {results['text_length_mean']:.0f} chars (±{results['text_length_std']:.0f})")
+        print(f"     Avg token count: {results['token_count_mean']:.0f} tokens (±{results['token_count_std']:.0f})")
+        print(f"     Token range: {results['token_count_min']}-{results['token_count_max']} tokens")
         print(f"     Generated {results['num_embeddings']} embeddings")
         if save_to_db:
             print(f"     Saved to DB: {products_saved} products, {embeddings_saved} embeddings")
@@ -267,6 +294,7 @@ class EmbeddingStrategyExperiment(BaseExperiment):
         # Rank strategies by different criteria
         metrics_to_rank = [
             ("text_length_mean", "ascending"),  # Shorter is better for efficiency
+            ("token_count_mean", "ascending"),  # Fewer tokens is better for cost
             ("total_time", "ascending"),  # Faster is better
             ("failed_embeddings", "ascending")  # Fewer failures is better
         ]
@@ -297,6 +325,8 @@ class EmbeddingStrategyExperiment(BaseExperiment):
                 summary.append({
                     "Strategy": strategy,
                     "Avg Text Length": f"{metrics['text_length_mean']:.0f}",
+                    "Avg Token Count": f"{metrics['token_count_mean']:.0f}",
+                    "Token Range": f"{metrics['token_count_min']:.0f}-{metrics['token_count_max']:.0f}",
                     "Total Time (s)": f"{metrics['total_time']:.2f}",
                     "Time/Product (s)": f"{metrics['avg_time_per_product']:.4f}",
                     "Failed": metrics['failed_embeddings']
@@ -306,13 +336,17 @@ class EmbeddingStrategyExperiment(BaseExperiment):
         
         # Print summary
         print("\n📊 Strategy Comparison Summary:")
-        print("-" * 80)
+        print("-" * 100)
+        print(f"{'Strategy':20} | {'Text (chars)':>12} | {'Tokens':>12} | {'Token Range':>15} | {'Time (s)':>10} | {'Failed':>6}")
+        print("-" * 100)
         for item in summary:
             print(f"{item['Strategy']:20} | "
-                  f"Text: {item['Avg Text Length']:>8} chars | "
-                  f"Time: {item['Total Time (s)']:>8}s | "
-                  f"Failed: {item['Failed']:>3}")
-        print("-" * 80)
+                  f"{item['Avg Text Length']:>12} | "
+                  f"{item['Avg Token Count']:>12} | "
+                  f"{item['Token Range']:>15} | "
+                  f"{item['Total Time (s)']:>10} | "
+                  f"{item['Failed']:>6}")
+        print("-" * 100)
         
         return comparison
     
@@ -356,17 +390,64 @@ class EmbeddingStrategyExperiment(BaseExperiment):
         
         # Generate visualizations if matplotlib is available
         try:
+            import matplotlib.pyplot as plt
             from app.experiments.visualizations.distribution import create_text_length_comparison
+            from app.experiments.visualizations.token_analysis import (
+                create_token_comparison, 
+                create_token_cost_analysis,
+                identify_outliers
+            )
             
             print("\n📊 Creating visualizations...")
             
             # Text length distribution comparison
             fig = create_text_length_comparison(self.results)
             fig.savefig(self.artifacts_dir / "text_length_comparison.png", dpi=100, bbox_inches='tight')
+            plt.close(fig)
             
-            print("  ✅ Visualizations created")
-        except ImportError:
-            print("  ⚠️  Matplotlib not available, skipping visualizations")
+            # Token count comparison
+            fig = create_token_comparison(self.results, self.artifacts_dir / "token_count_comparison.png")
+            plt.close(fig)
+            
+            # Token cost analysis
+            fig = create_token_cost_analysis(self.results, self.artifacts_dir / "token_cost_analysis.png")
+            plt.close(fig)
+            
+            # Outlier analysis for each strategy
+            outlier_results = {}
+            for strategy, data in self.results.items():
+                if "metrics" in data:
+                    # Load token counts from saved artifact if available
+                    token_file = self.artifacts_dir / f"{strategy}_token_counts.json"
+                    if token_file.exists():
+                        import json
+                        with open(token_file, 'r') as f:
+                            token_data = json.load(f)
+                            token_counts = token_data.get('counts', [])
+                            
+                        if token_counts:
+                            outliers = identify_outliers(token_counts, strategy)
+                            outlier_results[strategy] = outliers
+                            
+                            # Print outlier summary
+                            print(f"\n  📈 Token outliers for {strategy}:")
+                            print(f"     In optimal range (100-500): {outliers['absolute_outliers']['optimal_range']}")
+                            print(f"     Below optimal (<100): {outliers['absolute_outliers']['below_optimal']}")
+                            print(f"     Above optimal (>500): {outliers['absolute_outliers']['above_optimal']}")
+            
+            # Save outlier analysis
+            if outlier_results:
+                await self.save_artifact(outlier_results, "token_outlier_analysis.json")
+            
+            print("\n  ✅ All visualizations created successfully")
+            print("     - text_length_comparison.png")
+            print("     - token_count_comparison.png")
+            print("     - token_cost_analysis.png")
+            
+        except ImportError as e:
+            print(f"  ⚠️  Import error: {e}, skipping visualizations")
+        except Exception as e:
+            print(f"  ⚠️  Error creating visualizations: {e}")
         
         return {
             "num_strategies": len(self.strategies),

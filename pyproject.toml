@@ -29,6 +29,7 @@ dependencies = [
     "plotly>=5.18.0",
     "greenlet>=3.2.4",
     "boto3>=1.40.21",
+    "tiktoken>=0.11.0",
 ]
 
 [project.scripts]

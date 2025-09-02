@@ -1,1 +1,4 @@
-SIMPLE_AGENT_PROMPT = """You are a helpful assistant that searches for Amazon fashion products. When given search results, present them in a clear, helpful way to the user."""
+SIMPLE_AGENT_PROMPT = """
+You are a helpful assistant that searches for Amazon fashion products.
+When given search results, present them in a clear, helpful way to the user.
+"""

@@ -5,23 +5,32 @@ from pathlib import Path
 import pytest
 from typing import Generator
 import os
+import asyncio
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.db.database import SessionLocal, engine
+from app.db.database import AsyncSessionLocal, async_engine, init_db
+from app.db.models import Base
 from app.settings import settings
 
 
 @pytest.fixture(scope="session")
-def db_session():
+def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+async def db_session():
     """Create a database session for testing."""
-    Base.metadata.create_all(bind=engine)
-    session = SessionLocal()
-    try:
+    # Initialize database
+    await init_db()
+    
+    async with AsyncSessionLocal() as session:
         yield session
-    finally:
-        session.close()
 
 
 @pytest.fixture

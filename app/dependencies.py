@@ -1,5 +1,3 @@
-from typing import Annotated
-from fastapi import Depends
 from openai import AsyncOpenAI
 from minio import Minio
 
@@ -17,7 +15,3 @@ def get_minio_client() -> Minio:
         secret_key=settings.minio_secret_key,
         secure=settings.minio_secure
     )
-
-
-# OpenAIClient = Annotated[AsyncOpenAI, Depends(get_openai_client)]
-# MinioClient = Annotated[Minio, Depends(get_minio_client)]

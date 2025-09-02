@@ -1,0 +1,47 @@
+[
+  {
+    "Strategy": "title_only",
+    "Avg Text Length": "97",
+    "Avg Token Count": "24",
+    "Token Range": "4-52",
+    "Total Time (s)": "15.89",
+    "Time/Product (s)": "0.3178",
+    "Failed": 0
+  },
+  {
+    "Strategy": "title_features",
+    "Avg Text Length": "143",
+    "Avg Token Count": "34",
+    "Token Range": "12-200",
+    "Total Time (s)": "10.86",
+    "Time/Product (s)": "0.2171",
+    "Failed": 0
+  },
+  {
+    "Strategy": "title_category_store",
+    "Avg Text Length": "137",
+    "Avg Token Count": "35",
+    "Token Range": "15-62",
+    "Total Time (s)": "8.75",
+    "Time/Product (s)": "0.1750",
+    "Failed": 0
+  },
+  {
+    "Strategy": "title_details",
+    "Avg Text Length": "118",
+    "Avg Token Count": "30",
+    "Token Range": "13-52",
+    "Total Time (s)": "6.70",
+    "Time/Product (s)": "0.1340",
+    "Failed": 0
+  },
+  {
+    "Strategy": "comprehensive",
+    "Avg Text Length": "167",
+    "Avg Token Count": "43",
+    "Token Range": "21-150",
+    "Total Time (s)": "13.01",
+    "Time/Product (s)": "0.2601",
+    "Failed": 0
+  }
+]

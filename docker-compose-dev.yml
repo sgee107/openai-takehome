@@ -38,28 +38,6 @@ services:
     networks:
       - app-network
 
-  mlflow:
-    image: bitnami/mlflow:latest
-    environment:
-      - MLFLOW_DATABASE_HOST=postgres
-      - MLFLOW_DATABASE_PORT_NUMBER=5432
-      - MLFLOW_DATABASE_NAME=chatdb
-      - MLFLOW_DATABASE_USER=postgres
-      - MLFLOW_DATABASE_PASSWORD=postgres
-      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
-      - MLFLOW_S3_BUCKET=mlflow-artifacts
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-    ports:
-      - "5001:5000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    networks:
-      - app-network
-
 volumes:
   postgres_data:
   minio_data:

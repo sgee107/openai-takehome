@@ -55,8 +55,8 @@ class Settings(BaseSettings):
         description="Use HTTPS for MinIO"
     )
     minio_bucket_name: str = Field(
-        default="chat-storage",
-        description="Default MinIO bucket for app data"
+        default="mlflow-artifacts",
+        description="Default MinIO bucket for MLflow artifacts"
     )
     
     @computed_field

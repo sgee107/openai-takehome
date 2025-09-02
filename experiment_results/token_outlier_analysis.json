@@ -1,0 +1,92 @@
+{
+  "title_only": {
+    "strategy": "title_only",
+    "mean": 23.66,
+    "std": 8.514951555939705,
+    "statistical_outliers": {
+      "low": 0,
+      "high": 1,
+      "low_threshold": 2.372621110150739,
+      "high_threshold": 44.94737888984926
+    },
+    "absolute_outliers": {
+      "very_low": 49,
+      "very_high": 0,
+      "optimal_range": 0,
+      "below_optimal": 50,
+      "above_optimal": 0
+    }
+  },
+  "title_features": {
+    "strategy": "title_features",
+    "mean": 34.32,
+    "std": 30.39107763801738,
+    "statistical_outliers": {
+      "low": 0,
+      "high": 2,
+      "low_threshold": -41.657694095043446,
+      "high_threshold": 110.29769409504345
+    },
+    "absolute_outliers": {
+      "very_low": 45,
+      "very_high": 0,
+      "optimal_range": 3,
+      "below_optimal": 47,
+      "above_optimal": 0
+    }
+  },
+  "title_category_store": {
+    "strategy": "title_category_store",
+    "mean": 35.44,
+    "std": 8.795817187731904,
+    "statistical_outliers": {
+      "low": 0,
+      "high": 1,
+      "low_threshold": 13.450457030670236,
+      "high_threshold": 57.42954296932976
+    },
+    "absolute_outliers": {
+      "very_low": 47,
+      "very_high": 0,
+      "optimal_range": 0,
+      "below_optimal": 50,
+      "above_optimal": 0
+    }
+  },
+  "title_details": {
+    "strategy": "title_details",
+    "mean": 29.74,
+    "std": 8.153060774948266,
+    "statistical_outliers": {
+      "low": 0,
+      "high": 1,
+      "low_threshold": 9.357348062629335,
+      "high_threshold": 50.12265193737066
+    },
+    "absolute_outliers": {
+      "very_low": 49,
+      "very_high": 0,
+      "optimal_range": 0,
+      "below_optimal": 50,
+      "above_optimal": 0
+    }
+  },
+  "comprehensive": {
+    "strategy": "comprehensive",
+    "mean": 42.62,
+    "std": 19.36377029403107,
+    "statistical_outliers": {
+      "low": 0,
+      "high": 1,
+      "low_threshold": -5.789425735077678,
+      "high_threshold": 91.02942573507767
+    },
+    "absolute_outliers": {
+      "very_low": 43,
+      "very_high": 0,
+      "optimal_range": 1,
+      "below_optimal": 49,
+      "above_optimal": 0
+    }
+  }
+}

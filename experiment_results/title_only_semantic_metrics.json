@@ -1,0 +1,21 @@
+{
+  "strategy": "title_only",
+  "num_embeddings": 50,
+  "category_similarities": {
+    "AMAZON FASHION": {
+      "mean": 0.29003962482917617,
+      "std": 0.08622534608857066,
+      "min": 0.046719903803034035,
+      "max": 0.6552993995526349,
+      "count": 50
+    }
+  },
+  "avg_intra_category_similarity": 0.29003962482917617,
+  "avg_neighbor_consistency": 1.0,
+  "embedding_stats": {
+    "mean_norm": 1.0000000104677256,
+    "std_norm": 3.582029744237944e-08,
+    "mean_value": 0.00032385095591029237,
+    "std_value": 0.025513463129392577
+  }
+}
