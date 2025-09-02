@@ -9,14 +9,13 @@
 - [x] Docker Compose setup with pgvector/pgvector:pg16
 
 ### Required Setup Tasks - MVP Approach
-- [ ] **Phase 0.1: Core Infrastructure**
+- [x] **Phase 0.1: Core Infrastructure**
   - [x] Add MinIO service to docker-compose-dev.yml (if not already there)
-  - [x] Add Bitnami MLflow service to docker-compose-dev.yml with environment variables:
-    - [ ] `MLFLOW_BACKEND_STORE_URI=postgresql://postgres:postgres@postgres:5432/chatdb`
-    - [ ] `MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://mlflow-artifacts/`
-    - [ ] `MLFLOW_S3_ENDPOINT_URL=http://minio:9000`
-    - [ ] `AWS_ACCESS_KEY_ID=minioadmin`
-    - [ ] `AWS_SECRET_ACCESS_KEY=minioadmin`
+  - [x] MLflow setup - using simplified approach:
+    - [x] MLflow already added as dependency in pyproject.toml
+    - [x] Created test script to verify MLflow tracking works locally
+    - [x] Verified MLflow UI works (runs on http://127.0.0.1:5000)
+    - [ ] Add MLflow service to docker-compose-dev.yml (optional for production)
   - [x] Update app settings.py with MLflow client configuration
   - [ ] Verify pgvector extension is enabled in database
   - [x] Add MinIO bucket auto-create in data loader CLI
@@ -39,35 +38,32 @@
   - [ ] OpenAI text-embedding-3-small (1536 dims) - primary model
   - [ ] API key already configured in .env ✅
   - [ ] Add retry logic for API calls
-- [ ] Set up experiment tracking with MLflow:
+- [x] Set up experiment tracking with MLflow:
   - **Why MLflow?** Track experiments across different preprocessing strategies
   - **What it provides:**
-    - [ ] Automatic logging of parameters (normalization, preprocessing type)
-    - [ ] Metrics tracking over time (precision, recall, latency)
-    - [ ] Model versioning (which embedding config was used)
-    - [ ] Comparison UI (side-by-side metrics for normalized vs non-normalized)
-    - [ ] Artifact storage (save embeddings, confusion matrices, plots)
-    - [ ] Reproducibility (exact config to recreate any experiment)
+    - [x] Automatic logging of parameters (normalization, preprocessing type)
+    - [x] Metrics tracking over time (precision, recall, latency)
+    - [x] Model versioning (which embedding config was used)
+    - [x] Comparison UI (side-by-side metrics for normalized vs non-normalized)
+    - [x] Artifact storage (save embeddings, confusion matrices, plots)
+    - [x] Reproducibility (exact config to recreate any experiment)
   - **Dashboard gives you:**
     - Parallel coordinates plot comparing all experiments
     - Metric trends across preprocessing strategies
     - Best performing configuration at a glance
-  - **Setup Steps:**
-    - [x] Use official MLflow Docker image (ghcr.io/mlflow/mlflow:latest)
-    - [x] Add MLflow service to docker-compose-dev.yml with official image configuration
-    - [ ] Configure PostgreSQL as backend store (shares same DB as app)
-    - [ ] **Use MinIO for artifact storage** (you already have it configured!):
+  - **Simplified Setup (Working):**
+    - [x] MLflow installed via uv as dependency
+    - [x] Local tracking with file store (./mlruns)
+    - [x] UI accessible at http://127.0.0.1:5000 via `mlflow ui`
+    - [x] Verified with test script (scripts/test_mlflow.py)
+  - **Optional Docker Setup:**
       - [ ] Point MLflow artifacts to MinIO bucket instead of local volume
       - [ ] Benefits: Scalable, S3-compatible, web interface for browsing artifacts
       - [ ] Store: UMAP plots, embedding visualizations, model artifacts, confusion matrices
       - [ ] MLflow artifact URI: `s3://mlflow-artifacts/` (MinIO S3-compatible endpoint)
     - [x] Add MLflow client to Python dependencies: `mlflow`
       
-    - [ ] **No manual configuration needed!** Bitnami image handles:
-      - PostgreSQL backend connection
-      - MinIO S3 artifact storage  
-      - All MLflow server setup
-    - [ ] Client connects to: `http://localhost:5001`
+  - **Current Status:** ✅ MLflow working locally with file-based tracking
 
 - [ ] **Phase 0.2: MVP Validation Script**
   - [ ] Create `scripts/validate_setup.py` that tests:
@@ -108,6 +104,193 @@
 - [ ] Initialize database schema variations:
   - [ ] Create migration for multiple embedding table schemas
   - [ ] Add indexes for vector similarity search
+
+## Phase 0.4: Embedding Strategy Experiments (NEW - Active)
+### Experiment Design
+Our data loader already supports 5 text strategies. Let's systematically test them with MLflow tracking.
+
+### Module Structure
+```
+experiments/
+├── __init__.py
+├── base.py                    # Base experiment class with MLflow integration
+├── runners/
+│   ├── __init__.py
+│   ├── embedding_strategy.py  # Strategy comparison experiment
+│   ├── normalization.py       # Future: L2 norm experiments
+│   └── retrieval_quality.py   # Future: Search quality tests
+├── metrics/
+│   ├── __init__.py
+│   ├── semantic.py            # Semantic quality metrics (clustering, similarity)
+│   ├── performance.py         # Performance metrics (latency, throughput)
+│   └── storage.py             # Storage efficiency metrics
+├── visualizations/
+│   ├── __init__.py
+│   ├── umap_plots.py          # UMAP embedding space visualization
+│   ├── distribution.py        # Text length, token distributions
+│   └── comparison.py          # Strategy comparison charts
+├── utils/
+│   ├── __init__.py
+│   ├── data_loader.py         # Load consistent test datasets
+│   └── sampling.py            # Sample selection for experiments
+└── run_experiments.py         # Main CLI to run experiments
+```
+
+### Implementation Plan
+
+#### **1. Base Experiment Class (experiments/base.py)**
+```python
+class BaseExperiment:
+    """Base class for all experiments with MLflow tracking"""
+    
+    def __init__(self, experiment_name: str, tracking_uri: str = None):
+        self.mlflow_client = mlflow_client
+        self.experiment_name = experiment_name
+        
+    async def setup(self):
+        """Setup experiment, create MLflow experiment"""
+        
+    async def run(self):
+        """Main experiment logic - override in subclasses"""
+        
+    async def log_metrics(self, metrics: Dict):
+        """Log metrics to MLflow"""
+        
+    async def log_artifacts(self, artifacts: Dict):
+        """Save and log artifacts"""
+        
+    async def cleanup(self):
+        """Cleanup after experiment"""
+```
+
+#### **2. Embedding Strategy Experiment (experiments/runners/embedding_strategy.py)**
+```python
+class EmbeddingStrategyExperiment(BaseExperiment):
+    """Compare different text strategies for embeddings"""
+    
+    def __init__(self, strategies: List[str], num_products: int = 50):
+        super().__init__("embedding_strategy_comparison")
+        self.strategies = strategies
+        self.num_products = num_products
+        
+    async def run_single_strategy(self, strategy: str, products: List[Dict]):
+        """Run experiment for one strategy"""
+        # Generate embeddings
+        # Track metrics
+        # Create visualizations
+        
+    async def compare_strategies(self):
+        """Run all strategies and generate comparison"""
+        # Run each strategy
+        # Generate comparison plots
+        # Create summary report
+```
+
+#### **3. Metrics Modules (experiments/metrics/)**
+- **semantic.py**: Intra-category similarity, clustering quality, nearest neighbor accuracy
+- **performance.py**: Embedding generation time, query latency, batch processing speed
+- **storage.py**: Database size, index size, memory usage
+
+#### **4. Visualization Utilities (experiments/visualizations/)**
+- **umap_plots.py**: Generate UMAP plots colored by category, strategy
+- **distribution.py**: Text length histograms, token count distributions
+- **comparison.py**: Side-by-side strategy comparisons, radar charts
+
+#### **5. Main Runner Script (experiments/run_experiments.py)**
+```python
+# CLI interface
+import click
+
+@click.command()
+@click.option('--experiment', type=click.Choice(['strategy', 'normalization', 'retrieval']))
+@click.option('--num-products', default=50)
+@click.option('--strategies', multiple=True)
+async def run_experiment(experiment, num_products, strategies):
+    """Run embedding experiments with MLflow tracking"""
+    
+    if experiment == 'strategy':
+        exp = EmbeddingStrategyExperiment(strategies, num_products)
+        await exp.run()
+        
+# Usage: python experiments/run_experiments.py --experiment strategy --num-products 50 --strategies title_only --strategies comprehensive
+```
+
+### Available Embedding Strategies to Test
+1. **title_only** - Baseline, minimal text
+2. **title_features** - Title + product features  
+3. **title_category_store** - Title + category context + brand
+4. **title_details** - Title + key product details (Brand, Material, Style, etc.)
+5. **comprehensive** - Everything: title + brand + category + features + details + description
+
+### Implementation Steps
+- [ ] **Step 1: Create Experiments Module Structure**
+  - [ ] Create experiments/ directory at project root
+  - [ ] Implement base.py with BaseExperiment class
+  - [ ] Set up runners/ with embedding_strategy.py
+  - [ ] Create metrics/ modules (semantic, performance, storage)
+  - [ ] Build visualizations/ utilities
+  - [ ] Add run_experiments.py CLI
+
+- [ ] **Step 2: Implement Base Experiment Framework**
+  - [ ] BaseExperiment with MLflow lifecycle (setup, run, cleanup)
+  - [ ] Automatic metric logging with batching
+  - [ ] Artifact management (save plots, JSONs, CSVs)
+  - [ ] Error handling and recovery
+  - [ ] Progress tracking and logging
+
+- [ ] **Step 3: Build Embedding Strategy Experiment**
+  - [ ] Load consistent 50-product test dataset
+  - [ ] For each strategy:
+    - [ ] Generate embeddings using existing TextStrategy methods
+    - [ ] Track: generation time, text length, token estimates
+    - [ ] Store embeddings in separate tables (strategy-specific)
+    - [ ] Log samples to MLflow
+  - [ ] Generate comparison artifacts:
+    - [ ] Text length distribution plots
+    - [ ] Generation time comparisons
+    - [ ] Sample text examples
+
+- [ ] **Step 4: Add Semantic Quality Metrics**
+  - [ ] Implement semantic.py:
+    - [ ] Cosine similarity calculations
+    - [ ] Intra-category clustering metrics
+    - [ ] Nearest neighbor accuracy
+  - [ ] For each strategy:
+    - [ ] Calculate average similarity within categories
+    - [ ] Find k-nearest neighbors for sample products
+    - [ ] Measure clustering quality (silhouette score)
+  - [ ] Generate UMAP visualizations per strategy
+
+- [ ] **Step 5: Performance & Storage Analysis**
+  - [ ] Implement performance.py:
+    - [ ] Query latency testing
+    - [ ] Batch processing throughput
+    - [ ] Memory profiling
+  - [ ] Implement storage.py:
+    - [ ] Database size per strategy
+    - [ ] Index size comparisons
+    - [ ] Compression ratios
+  - [ ] Create comparison dashboard
+
+- [ ] **Step 6: Run Full Experiment Suite**
+  - [ ] Execute: `python experiments/run_experiments.py --experiment strategy --num-products 50`
+  - [ ] Verify all metrics logged to MLflow
+  - [ ] Check artifacts generated (plots, reports)
+  - [ ] Review MLflow UI for comparison
+  - [ ] Generate final recommendations
+
+### Success Metrics
+- [ ] All 5 strategies tested on same product set
+- [ ] MLflow tracking captures all metrics
+- [ ] Clear performance comparison table
+- [ ] UMAP visualizations showing clustering quality
+- [ ] Recommendation on which strategy to use when
+
+### Next Steps After This Phase
+- Add L2 normalization comparison
+- Test with larger dataset (all 300 products)
+- Implement image enrichment (Phase 1)
+- Add retrieval quality metrics with test queries
 
 ## Phase 1: Data Loading Infrastructure
 ### Data Source

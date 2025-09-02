@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.settings import settings
 from app.chat import router as chat_router
+from app.chat_simple import router as simple_router
 from app.db.database import init_db, async_engine
 
 
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(chat_router)
+app.include_router(simple_router)
 
 
 @app.get("/")

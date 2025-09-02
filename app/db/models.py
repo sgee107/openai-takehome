@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import DateTime, func, String, Float, Integer, Text, JSON, ForeignKey
+from sqlalchemy import DateTime, func, String, Float, Integer, Text, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
@@ -26,11 +26,11 @@ class Product(Base):
     categories: Mapped[Optional[list]] = mapped_column(JSON)
     details: Mapped[Optional[dict]] = mapped_column(JSON)
     bought_together: Mapped[Optional[str]] = mapped_column(Text)
-    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(1536))
     
     # Relationships
     images: Mapped[list["ProductImage"]] = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
     videos: Mapped[list["ProductVideo"]] = relationship("ProductVideo", back_populates="product", cascade="all, delete-orphan")
+    embeddings: Mapped[list["ProductEmbedding"]] = relationship("ProductEmbedding", back_populates="product", cascade="all, delete-orphan")
 
 
 class ProductImage(Base):
@@ -55,3 +55,19 @@ class ProductVideo(Base):
     
     # Relationships
     product: Mapped[Product] = relationship("Product", back_populates="videos")
+
+
+class ProductEmbedding(Base):
+    __tablename__ = "product_embeddings"
+    __table_args__ = (
+        UniqueConstraint('product_id', 'strategy', name='_product_strategy_uc'),
+    )
+    
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    strategy: Mapped[str] = mapped_column(String(50), index=True)
+    embedding_text: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list[float]] = mapped_column(Vector(1536))
+    model: Mapped[str] = mapped_column(String(50), default="text-embedding-3-small")
+    
+    # Relationships
+    product: Mapped[Product] = relationship("Product", back_populates="embeddings")

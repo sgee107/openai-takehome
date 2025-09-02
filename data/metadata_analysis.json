@@ -1,0 +1,161 @@
+{
+  "stats": {
+    "total_products": 300,
+    "field_presence": {
+      "main_category": 300,
+      "title": 300,
+      "average_rating": 300,
+      "rating_number": 300,
+      "features": 300,
+      "description": 300,
+      "images": 300,
+      "videos": 300,
+      "store": 288,
+      "categories": 300,
+      "details": 300,
+      "parent_asin": 300,
+      "price": 41
+    },
+    "field_presence_percentage": {
+      "main_category": "100.0%",
+      "title": "100.0%",
+      "average_rating": "100.0%",
+      "rating_number": "100.0%",
+      "features": "100.0%",
+      "description": "100.0%",
+      "images": "100.0%",
+      "videos": "100.0%",
+      "store": "96.0%",
+      "categories": "100.0%",
+      "details": "100.0%",
+      "parent_asin": "100.0%",
+      "price": "13.7%"
+    },
+    "text_fields_populated": {
+      "title": 300,
+      "features": 159,
+      "description": 21,
+      "store": 288,
+      "categories": 0,
+      "details": 300
+    },
+    "text_fields_percentage": {
+      "title": "100.0%",
+      "features": "53.0%",
+      "description": "7.0%",
+      "store": "96.0%",
+      "categories": "0.0%",
+      "details": "100.0%"
+    },
+    "category_distribution": {
+      "AMAZON FASHION": 300
+    },
+    "store_distribution": {
+      "Michael Kors": 4,
+      "MSBASIC": 3,
+      "ACEVOG": 2,
+      "GRACE KARIN": 2,
+      "JOTW": 2,
+      "Nike": 2,
+      "Under Armour": 2,
+      "HIKA": 2,
+      "H2H": 2,
+      "SweatyRocks": 2
+    },
+    "detail_keys_frequency": {
+      "Date First Available": 300,
+      "Package Dimensions": 197,
+      "Item model number": 147,
+      "Is Discontinued By Manufacturer": 111,
+      "Product Dimensions": 62,
+      "Department": 50,
+      "Manufacturer": 28,
+      "Brand": 12,
+      "Age Range (Description)": 8,
+      "Item Weight": 6,
+      "Color": 5,
+      "Style": 5,
+      "Material": 4,
+      "Closure Type": 4,
+      "Country of Origin": 2
+    },
+    "features_stats": {
+      "products_with_features": 159,
+      "avg_features_count": 2.389937106918239,
+      "max_features": 9,
+      "min_features": 1
+    },
+    "description_stats": {
+      "products_with_description": 21,
+      "avg_description_count": 1.7142857142857142,
+      "max_descriptions": 13
+    },
+    "images_stats": {
+      "products_with_images": 300,
+      "avg_images_count": 4.6,
+      "max_images": 9
+    },
+    "rating_distribution": {
+      "5": 96,
+      "4": 139,
+      "2": 13,
+      "1": 9,
+      "3": 43
+    },
+    "price_distribution": {
+      "null": 259,
+      "has_price": 41
+    }
+  },
+  "embedding_combinations": [
+    {
+      "name": "title_only",
+      "description": "Product title only",
+      "fields": [
+        "title"
+      ],
+      "coverage": "100.0%"
+    },
+    {
+      "name": "title_features",
+      "description": "Title combined with product features",
+      "fields": [
+        "title",
+        "features"
+      ],
+      "coverage": "~53.0%"
+    },
+    {
+      "name": "title_category_store",
+      "description": "Title with category and store information",
+      "fields": [
+        "title",
+        "main_category",
+        "store"
+      ],
+      "coverage": "~96.0%"
+    },
+    {
+      "name": "all_text",
+      "description": "All available text fields combined",
+      "fields": [
+        "title",
+        "features",
+        "description",
+        "main_category",
+        "store",
+        "categories"
+      ],
+      "coverage": "Varies by product"
+    },
+    {
+      "name": "title_details",
+      "description": "Title with selected product details (brand, material, etc.)",
+      "fields": [
+        "title",
+        "details_selected"
+      ],
+      "coverage": "~100.0%"
+    }
+  ]
+}

@@ -28,3 +28,15 @@ Adding in MLFlow so I can organize some of the experiments that I'll be running 
 Took me a little longer than I would like to get that set up but think it should be worth the hassle at some point.
 
 Also need to keep streaming out of this here for a little bit, which is also fine.
+
+As we load in the datasets, want to get an idea of the metadata density. Doing a quick count of the first 300 metadata to see what we can use for our initial embeddings creation. 
+
+Will set up some basic tools on the chat call to use so that we can make embeddings calls in the loop here.
+
+Also setting up some basic data loading functionalities that create a few different types of embeddings based on the data available.
+
+Working on the prompts and agent tools now. Would normally add the prompts as a configurable entity so that they can be changed at runtime but will just use this for now and explain for interviews.
+
+Now data loading is working the way I want with just the title of the data, let's try out some queries and see how things are looking.
+
+Set up MLFlow w/ a basic setup locally so that we can test some of the different embeddings. Should start there.
