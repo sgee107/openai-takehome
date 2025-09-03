@@ -26,6 +26,24 @@ class Settings(BaseSettings):
     
     # Application settings
     debug: bool = Field(default=False, description="Debug mode")
+    
+    # Startup embedding configuration
+    startup_embedding_enabled: bool = Field(
+        default=False, 
+        description="Enable automatic embedding generation on startup"
+    )
+    startup_embedding_strategy: str = Field(
+        default="key_value_with_images",
+        description="Default strategy for startup embeddings (optimal performance + visual intelligence for fashion)"
+    )
+    startup_embedding_batch_size: int = Field(
+        default=50,
+        description="Batch size for startup embedding generation"
+    )
+    startup_embedding_max_products: int = Field(
+        default=100,
+        description="Maximum products to process on startup"
+    )
 
     # MLflow configuration
     mlflow_tracking_uri: str = Field(

@@ -33,8 +33,9 @@ dependencies = [
 ]
 
 [project.scripts]
-takehome = "app.scripts.cli:data_loader"
 mlflow-server = "app.scripts.mlflow_server:start_mlflow_server"
+db-manager = "app.process.cli.db_manager:cli"
+pipeline = "app.process.cli.pipeline:cli"
 
 [tool.setuptools.packages.find]
 include = ["app*"]

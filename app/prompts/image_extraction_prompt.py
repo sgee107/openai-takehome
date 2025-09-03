@@ -31,6 +31,24 @@ Provide a comprehensive fashion analysis that covers all these aspects:
 - Age Group: Who this appeals to (young adult, adult, mature, all ages)
 - Lifestyle: Target lifestyle (professional, casual, active, trendy, classic, etc.)
 
+**ENHANCED ANALYSIS (provide when clear from image):**
+
+*Enhanced Styling Context:*
+- Seasonal Appropriateness: Which specific seasons this works best in and why (up to 3)
+- Enhanced Styling Suggestions: Comprehensive styling tips including layering and combinations (up to 4)  
+- Complementary Items: Specific clothing and accessories that pair perfectly (up to 4)
+- Wardrobe Role: What role this plays (statement piece, basic essential, accent item, etc.)
+
+*Enhanced Target Audience:*
+- Demographic Fit: Detailed ideal customer description including lifestyle descriptors
+- Lifestyle Alignment: How this fits specific lifestyles (busy professional, creative, etc.)
+- Brand Personality: What brand personality this conveys (minimalist, bold, classic, etc.)
+
+*Technical Details:*
+- Fit Description: How this fits and interacts with the body
+- Silhouette Analysis: How the silhouette affects appearance and what it flatters
+- Functional Features: Practical aspects like pockets, stretch, durability (up to 4)
+
 **GUIDELINES:**
 - Use precise fashion industry terminology
 - Consider the item's versatility and styling potential  
@@ -39,8 +57,9 @@ Provide a comprehensive fashion analysis that covers all these aspects:
 - Think about current fashion trends while noting timeless elements
 - Consider fabric drape, structure, and how it would move/fit on the body
 - Note any distinctive brand elements or design features visible
+- For enhanced fields, only provide when you can clearly determine from the image - leave blank if uncertain
 
 **CONFIDENCE:**
 Rate your confidence in this analysis from 0.0 to 1.0 based on image clarity and your ability to assess all the details requested.
 
-Remember: Your analysis should provide rich, actionable information that helps customers understand not just what the item looks like, but how it fits into their wardrobe and lifestyle."""
+Remember: Your analysis should provide rich, actionable information that helps customers understand not just what the item looks like, but how it fits into their wardrobe and lifestyle. The enhanced fields should significantly increase the depth and utility of your analysis."""

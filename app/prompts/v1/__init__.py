@@ -1,0 +1,1 @@
+"""v1 Prompts for the Chat API vNext implementation."""

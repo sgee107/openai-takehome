@@ -34,6 +34,8 @@ class TargetAudience(BaseModel):
     lifestyle: str = Field(description="Target lifestyle - professional, casual, active, etc.")
 
 
+
+
 class FashionImageAnalysis(BaseModel):
     """Complete fashion analysis of a product image."""
     overview: str = Field(description="One sentence summary of the item's key characteristics")
@@ -43,6 +45,22 @@ class FashionImageAnalysis(BaseModel):
     usage_context: UsageContext
     target_audience: TargetAudience
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score for the analysis")
+    
+    # Enhanced styling context fields
+    seasonal_appropriateness: Optional[List[str]] = Field(None, max_length=3, description="Seasons this item works best in")
+    enhanced_styling_suggestions: Optional[List[str]] = Field(None, max_length=4, description="Detailed styling tips and combinations")
+    complementary_items: Optional[List[str]] = Field(None, max_length=4, description="Items that pair well with this piece")
+    wardrobe_role: Optional[str] = Field(None, description="Role in wardrobe - statement piece, basic, accent, etc.")
+    
+    # Enhanced target audience fields
+    demographic_fit: Optional[str] = Field(None, description="Primary demographic - age, gender, lifestyle descriptors")
+    lifestyle_alignment: Optional[str] = Field(None, description="Lifestyle match - professional, casual, active, creative, etc.")
+    brand_personality: Optional[str] = Field(None, description="Brand personality this item conveys")
+    
+    # Enhanced technical details fields
+    fit_description: Optional[str] = Field(None, description="Detailed fit characteristics and body interaction")
+    silhouette_analysis: Optional[str] = Field(None, description="Silhouette impact and visual effect")
+    functional_features: Optional[List[str]] = Field(None, max_length=4, description="Functional aspects and practical benefits")
 
 
 # For backwards compatibility with existing code

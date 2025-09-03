@@ -3,9 +3,11 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from typing import List, Dict, Any
+
 from app.dependencies import get_openai_client
 from app.db.database import get_async_session
-from app.search import search_products
+from app.api.search import search_products
 from app.prompts.simple_prompt import SIMPLE_AGENT_PROMPT
 from app.db.models import Product, ProductEmbedding
 

@@ -1,13 +1,17 @@
 """
 Image extraction using OpenAI's vision models with structured outputs.
 """
-from typing import Optional
+import asyncio
+from typing import Optional, Union
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.settings import settings
 from app.prompts import IMAGE_EXTRACTION_PROMPT
-from app.types.fashion_analysis import FashionImageAnalysis, SimpleFashionAnalysis
+from app.types.fashion_analysis import (
+    FashionImageAnalysis, 
+    SimpleFashionAnalysis
+)
 from app.db.models import ProductImage, ProductImageAnalysis
 
 
