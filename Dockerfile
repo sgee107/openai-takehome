@@ -40,6 +40,7 @@ FROM base as prod
 COPY --from=dependencies /usr/local /usr/local
 
 COPY app app/
+COPY data data/
 COPY main.py .
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

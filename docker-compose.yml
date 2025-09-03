@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/app/app
-      - ./main.py:/app/main.py
+      - ./data:/app/data
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -50,12 +50,15 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      - BACKEND_URL=http://app:8000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - app-network
     labels:
       - "com.docker.compose.service=fashion-search-frontend"
 

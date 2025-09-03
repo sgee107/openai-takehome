@@ -60,24 +60,94 @@ To test these questions via terminal, you can use curl commands:
 
 ```bash
 # Test a simple search query
-curl -X POST "http://localhost:8000/api/chat" \
+curl -X POST "http://localhost:8000/chat/search" \
   -H "Content-Type: application/json" \
   -d '{"query": "Show me blue socks for men"}'
 
 # Test a complex search query
-curl -X POST "http://localhost:8000/api/chat" \
+curl -X POST "http://localhost:8000/chat/search" \
   -H "Content-Type: application/json" \
   -d '{"query": "Find high-rated compression gear"}'
 
-# Test with specific parameters
-curl -X POST "http://localhost:8000/api/chat" \
+# Test with debug information
+curl -X POST "http://localhost:8000/chat/search" \
   -H "Content-Type: application/json" \
-  -d '{"query": "Looking for navy blue clothing", "limit": 5}'
+  -d '{"query": "Looking for navy blue clothing", "debug": true}'
+
+# Test with custom parameters
+curl -X POST "http://localhost:8000/chat/search" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Show me accessories", "topK": 5, "lambda_blend": 0.9}'
 ```
 
 ### Testing via API Documentation
 
 Alternatively, visit `http://localhost:8000/docs` and use the interactive API documentation to test these queries directly in your browser.
+
+## CLI Tools & Experiments
+
+### Data Processing Pipeline
+
+Use the unified pipeline CLI to load data and run experiments:
+
+```bash
+# Load first 100 products with default strategy
+uv run python -m app.process.cli.pipeline run -n 100
+
+# Run experiment comparing embedding strategies
+uv run python -m app.process.cli.pipeline run --experiment -n 300 -s title_only -s comprehensive
+
+# Dry run (test without saving to database)
+uv run python -m app.process.cli.pipeline run --dry-run -n 50
+
+# Process all products with all strategies  
+uv run python -m app.process.cli.pipeline run --experiment
+
+# List available embedding strategies
+uv run python -m app.process.cli.pipeline list-strategies
+```
+
+### Database Management
+
+Manage database schema operations:
+
+```bash
+# Reset database (drop and recreate all tables)
+uv run python -m app.process.cli.db_manager reset
+
+# Create tables only
+uv run python -m app.process.cli.db_manager create
+
+# Drop all tables (destructive!)
+uv run python -m app.process.cli.db_manager drop
+
+# Check existing tables
+uv run python -m app.process.cli.db_manager check
+```
+
+### MLflow Experiment Tracking
+
+View experiment results in MLflow UI:
+
+```bash
+# Start MLflow UI (view at http://localhost:5000)
+uv run python -m app.process.cli.pipeline mlflow-ui
+
+# Or use MLflow directly
+mlflow ui --port 5000
+```
+
+### Available Embedding Strategies
+
+- `title_only` - Simple baseline using only product title
+- `title_features` - Title combined with product features
+- `title_category_store` - Title with category and brand information
+- `title_details` - Title with selected product details  
+- `comprehensive` - Comprehensive text with multiple fields
+- `key_value_basic` - Structured key-value format (essential fields)
+- `key_value_detailed` - Structured key-value format (all fields)
+- `key_value_with_images` - Key-value format with image analysis
+- `key_value_comprehensive` - Maximum extraction key-value format
 
 ## Developer Setup
 
