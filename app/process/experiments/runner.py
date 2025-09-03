@@ -310,80 +310,104 @@ class EmbeddingExperiment(BaseExperiment):
         from app.process.core.embedding_generator import EmbeddingGenerator
         embedding_generator = EmbeddingGenerator()
         
+        # Use ProductLoader if save_to_db is enabled
+        product_loader = None
+        if self.save_to_db:
+            from app.process.core.product_loader import ProductLoader
+            product_loader = ProductLoader(session)
+        
         # Process products in batches
         for i in range(0, len(self.products), self.batch_size):
             batch = self.products[i:i + self.batch_size]
             batch_start = time.time()
             
-            # Generate texts and embeddings for batch
-            texts = []
-            
-            for product_data in batch:
-                # Handle image analysis for strategies that need it
-                image_analysis = None
-                if needs_image_analysis and product_data.get('images'):
-                    try:
-                        image_analysis_count += 1
-                        # Get the first high-resolution image
-                        target_image = None
-                        for img in product_data['images']:
-                            if isinstance(img, dict) and img.get('large'):
-                                target_image = img['large']
-                                break
-                        
-                        if target_image:
-                            print(f"    🎯 [API CALL #{image_analysis_count}] Analyzing image for: {product_data.get('title', 'Unknown')[:40]}...")
+            # If save_to_db is enabled, use ProductLoader for this batch
+            if self.save_to_db and product_loader:
+                # Save products and generate embeddings through ProductLoader
+                batch_saved, batch_failed = await product_loader.load_products_batch(
+                    batch,
+                    self.batch_size,
+                    [strategy]  # Only process the current strategy
+                )
+                products_saved += batch_saved
+                embeddings_saved += batch_saved  # One embedding per product for this strategy
+                
+                # Still need to collect metrics for analysis
+                # Generate texts for metrics collection
+                texts = []
+                for product_data in batch:
+                    # Handle image analysis for strategies that need it
+                    image_analysis = None
+                    if needs_image_analysis and product_data.get('images'):
+                        try:
+                            image_analysis_count += 1
+                            # Get the first high-resolution image
+                            target_image = None
+                            for img in product_data['images']:
+                                if isinstance(img, dict) and img.get('large'):
+                                    target_image = img['large']
+                                    break
                             
-                            # Call OpenAI image analysis
-                            image_analysis = await extract_enhanced_fashion_analysis(
-                                image_url=target_image,
-                                client=openai_client,
-                                prompt_version="v1"
-                            )
-                            
-                            if image_analysis and image_analysis.confidence > 0.5:
-                                image_analysis_success += 1
-                                print(f"    ✅ [API CALL #{image_analysis_count}] Image analysis completed (confidence: {image_analysis.confidence:.2f})")
-                            else:
-                                print(f"    ⚠️ [API CALL #{image_analysis_count}] Low confidence analysis (confidence: {image_analysis.confidence:.2f if image_analysis else 0:.2f})")
+                            if target_image:
+                                print(f"    🎯 [API CALL #{image_analysis_count}] Analyzing image for: {product_data.get('title', 'Unknown')[:40]}...")
                                 
-                    except Exception as e:
-                        print(f"    ❌ [API CALL #{image_analysis_count}] Error analyzing image: {e}")
-                        image_analysis = None
-                
-                # Generate text with or without image analysis
-                if needs_image_analysis and image_analysis:
-                    text = strategy_instance.generate(product_data, image_analysis=image_analysis)
-                else:
-                    text = strategy_instance.generate(product_data)
-                
-                texts.append(text)
-                text_lengths.append(len(text))
-                
-                # Count tokens
-                tokens = encoder.encode(text)
-                token_counts.append(len(tokens))
-                
-                # Save samples with image analysis info
-                if len(sample_texts) < 10:
-                    sample_data = {
-                        "title": product_data.get('title', 'Unknown')[:100],
-                        "strategy": strategy,
-                        "text": text[:500],  # First 500 chars
-                        "full_length": len(text),
-                        "token_count": len(tokens),
-                        "has_images": bool(product_data.get('images')),
-                        "image_analysis_used": image_analysis is not None,
-                        "image_analysis_confidence": image_analysis.confidence if image_analysis else None
-                    }
-                    sample_texts.append(sample_data)
+                                # Call OpenAI image analysis
+                                image_analysis = await extract_enhanced_fashion_analysis(
+                                    image_url=target_image,
+                                    client=openai_client,
+                                    prompt_version="v1"
+                                )
+                                
+                                if image_analysis and image_analysis.confidence > 0.5:
+                                    image_analysis_success += 1
+                                    print(f"    ✅ [API CALL #{image_analysis_count}] Image analysis completed (confidence: {image_analysis.confidence:.2f})")
+                                else:
+                                    print(f"    ⚠️ [API CALL #{image_analysis_count}] Low confidence analysis (confidence: {image_analysis.confidence:.2f if image_analysis else 0:.2f})")
+                                
+                        except Exception as e:
+                            print(f"    ❌ [API CALL #{image_analysis_count}] Error analyzing image: {e}")
+                            image_analysis = None
+                    
+                    # Generate text with or without image analysis
+                    if needs_image_analysis and image_analysis:
+                        text = strategy_instance.generate(product_data, image_analysis=image_analysis)
+                    else:
+                        text = strategy_instance.generate(product_data)
+                    
+                    texts.append(text)
+                    text_lengths.append(len(text))
+                    
+                    # Count tokens
+                    tokens = encoder.encode(text)
+                    token_counts.append(len(tokens))
+                    
+                    # Save samples with image analysis info
+                    if len(sample_texts) < 10:
+                        sample_data = {
+                            "title": product_data.get('title', 'Unknown')[:100],
+                            "strategy": strategy,
+                            "text": text[:500],  # First 500 chars
+                            "full_length": len(text),
+                            "token_count": len(tokens),
+                            "has_images": bool(product_data.get('images')),
+                            "image_analysis_used": image_analysis is not None,
+                            "image_analysis_confidence": image_analysis.confidence if image_analysis else None
+                        }
+                        sample_texts.append(sample_data)
             
-            # Generate embeddings for batch
-            batch_embeddings = await embedding_generator.generate_embeddings_batch(texts, self.batch_size)
-            
-            # Store embeddings (filter out None values)
-            valid_embeddings = [e for e in batch_embeddings if e is not None]
-            embeddings.extend(valid_embeddings)
+            # If not saving to DB, generate embeddings for analysis
+            if not self.save_to_db:
+                # Generate embeddings for batch
+                batch_embeddings = await embedding_generator.generate_embeddings_batch(texts, self.batch_size)
+                
+                # Store embeddings (filter out None values)
+                valid_embeddings = [e for e in batch_embeddings if e is not None]
+                embeddings.extend(valid_embeddings)
+            else:
+                # If saving to DB, we don't need to generate embeddings again
+                # The ProductLoader already handled it
+                # Just track that we processed them
+                embeddings.extend([None] * len(texts))  # Placeholder for count
             
             # Track time
             batch_time = time.time() - batch_start
@@ -415,8 +439,10 @@ class EmbeddingExperiment(BaseExperiment):
             "token_count_max": max(token_counts),
             "token_count_median": np.median(token_counts),
             "num_embeddings": len(embeddings),
-            "embedding_dimension": len(embeddings[0]) if embeddings else 0,
+            "embedding_dimension": len(embeddings[0]) if embeddings and embeddings[0] is not None else 0,
             "failed_embeddings": len(self.products) - len(embeddings),
+            "products_saved": products_saved,
+            "embeddings_saved": embeddings_saved,
             "image_analysis_attempted": image_analysis_count,
             "image_analysis_successful": image_analysis_success,
             "image_analysis_success_rate": image_analysis_success / image_analysis_count if image_analysis_count > 0 else 0
@@ -447,13 +473,16 @@ class EmbeddingExperiment(BaseExperiment):
             "median": results["token_count_median"]
         }, f"{strategy}_token_counts.json")
         
-        # Store embeddings as numpy array for later analysis
-        if embeddings:
-            embeddings_array = np.array(embeddings)
-            np.save(self.artifacts_dir / f"{strategy}_embeddings.npy", embeddings_array)
-            
-            # Store in results for comparison
-            self.results[strategy]["embeddings"] = embeddings_array
+        # Store embeddings as numpy array for later analysis (only if we have actual embeddings)
+        if embeddings and not self.save_to_db:
+            # Filter out None placeholders
+            valid_embeddings = [e for e in embeddings if e is not None]
+            if valid_embeddings:
+                embeddings_array = np.array(valid_embeddings)
+                np.save(self.artifacts_dir / f"{strategy}_embeddings.npy", embeddings_array)
+                
+                # Store in results for comparison
+                self.results[strategy]["embeddings"] = embeddings_array
         
         self.results[strategy]["metrics"] = results
         
@@ -462,6 +491,10 @@ class EmbeddingExperiment(BaseExperiment):
         print(f"     Avg token count: {results['token_count_mean']:.0f} tokens (±{results['token_count_std']:.0f})")
         print(f"     Token range: {results['token_count_min']}-{results['token_count_max']} tokens")
         print(f"     Generated {results['num_embeddings']} embeddings")
+        
+        if self.save_to_db:
+            print(f"     Products saved: {results['products_saved']}")
+            print(f"     Embeddings saved: {results['embeddings_saved']}")
         
         # Print image analysis metrics if applicable
         if needs_image_analysis:

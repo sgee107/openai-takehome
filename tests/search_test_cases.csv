@@ -1,0 +1,10 @@
+test_id,category,query,expected_complexity,expected_parsed_category,expected_parsed_brand,expected_parsed_price_min,expected_parsed_price_max,expected_top_result_title_contains,expected_min_semantic_score,expected_min_rating_score,expected_facets_include,should_have_followups,lambda_blend,topk,description
+direct_001,DIRECT,"YUEDGE athletic crew socks blue",1,socks,YUEDGE,,,"""YUEDGE,socks,blue""",0.8,0.3,"""Brand,Size""",False,0.85,50,Direct brand+product match with color specification
+direct_002,DIRECT,"""moisture control socks""",1,socks,,,,,"""moisture,control""",0.9,0.2,"""Brand""",False,0.85,50,Quoted exact phrase search
+filtered_001,FILTERED,"women's dress under $50",2,dress,,,50.0,"""dress""",0.6,0.3,"""Price Range,Brand,Size""",False,0.7,100,Category with price constraint
+filtered_002,FILTERED,"Nike running shoes size 10",2,shoes,Nike,,,"""Nike,shoes""",0.7,0.4,"""Brand,Size,Color""",False,0.8,75,Brand + category + size specification
+filtered_003,FILTERED,"black leather jacket $100-200",2,jacket,,100.0,200.0,"""jacket,black""",0.65,0.3,"""Price Range,Material,Color""",False,0.6,100,Color + material + category with price range
+ambiguous_001,AMBIGUOUS,"something stylish for work",3,,,,,"""""""",0.3,0.5,"""Category,Brand""",True,0.3,200,Very broad context-dependent query
+ambiguous_002,AMBIGUOUS,"gift for mom",3,,,,,"""""""",0.2,0.6,"""Category,Price Range""",True,0.4,200,Gift-giving context needs clarification
+edge_001,FILTERED,"red",2,,,,,"""red""",0.4,0.4,"""Category,Brand""",True,0.5,150,Single color attribute query
+edge_002,DIRECT,"B07XYZ123",1,,,,,"""""""",0.1,0.3,"""""""",True,0.9,20,ASIN-like identifier should return few/no results

@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     
     # Startup embedding configuration
     startup_embedding_enabled: bool = Field(
-        default=False, 
+        default=True, 
         description="Enable automatic embedding generation on startup"
     )
     startup_embedding_strategy: str = Field(
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
         description="Batch size for startup embedding generation"
     )
     startup_embedding_max_products: int = Field(
-        default=100,
+        default=20,
         description="Maximum products to process on startup"
     )
 
@@ -75,6 +75,24 @@ class Settings(BaseSettings):
     minio_bucket_name: str = Field(
         default="mlflow-artifacts",
         description="Default MinIO bucket for MLflow artifacts"
+    )
+    
+    # Search ranking configuration
+    ranking_lambda_blend: float = Field(
+        default=0.85,
+        description="Default lambda for linear blend ranking (semantic vs rating weight)"
+    )
+    ranking_bayesian_mu: float = Field(
+        default=4.0,
+        description="Bayesian rating prior mean (4.0 for 5-star scale)"
+    )
+    ranking_bayesian_w: float = Field(
+        default=20.0,
+        description="Bayesian rating prior weight for shrinkage"
+    )
+    search_topk_default: int = Field(
+        default=40,
+        description="Default number of candidates to retrieve"
     )
     
     @computed_field

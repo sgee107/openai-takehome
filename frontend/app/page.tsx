@@ -1,43 +1,71 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ChatResponse, ProductResult } from '../lib/types';
+import { 
+  ChatSearchResponse, 
+  ProductResultVNext, 
+  SearchStateVNext
+} from '../lib/types';
 import SearchBar from '../components/SearchBar';
 import ProductGrid from '../components/ProductGrid';
 import ProductModal from '../components/ProductModal';
 import DebugToggle from '../components/DebugToggle';
 
 export default function Home() {
-  const [searchState, setSearchState] = useState({
+  const [searchState, setSearchState] = useState<SearchStateVNext>({
     query: '',
-    results: [] as ProductResult[],
+    results: [],
     loading: false,
     debugMode: false,
+    agent: undefined,
+    facets: undefined,
+    followups: undefined,
+    debug: undefined,
   });
-  const [selectedProduct, setSelectedProduct] = useState<ProductResult | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductResultVNext | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleSearch = useCallback(async (query: string) => {
-    setSearchState(prev => ({ ...prev, loading: true, query }));
+    setSearchState(prev => ({ 
+      ...prev, 
+      loading: true, 
+      query,
+      results: [],
+      agent: undefined,
+      facets: undefined,
+      followups: undefined,
+      debug: undefined
+    }));
     
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query, limit: 20 }),
+        body: JSON.stringify({ 
+          query, 
+          topK: 20, 
+          lambda: 0.85,
+          debug: searchState.debugMode
+        }),
       });
       
       if (!response.ok) {
-        throw new Error('Search failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Search failed');
       }
       
-      const data: ChatResponse = await response.json();
+      const data: ChatSearchResponse = await response.json();
+      
       setSearchState(prev => ({ 
         ...prev, 
         results: data.results, 
-        loading: false 
+        loading: false,
+        agent: data.agent,
+        facets: data.facets,
+        followups: data.followups,
+        debug: data.debug
       }));
     } catch (error) {
       console.error('Search error:', error);
@@ -46,24 +74,20 @@ export default function Home() {
         results: [], 
         loading: false 
       }));
+      alert(error instanceof Error ? error.message : 'Search failed. Please try again.');
     }
-  }, []);
+  }, [searchState.debugMode]);
 
-  const handleProductClick = useCallback((product: ProductResult) => {
+  const handleProductClick = useCallback((product: ProductResultVNext) => {
     setSelectedProduct(product);
     setModalOpen(true);
   }, []);
 
-  const handleFindSimilar = useCallback((product: ProductResult) => {
+  const handleFindSimilar = useCallback((product: ProductResultVNext) => {
     setModalOpen(false);
-    // Extract keywords from the product for similarity search
-    const keywords = [
-      product.main_category,
-      product.store,
-      ...product.title.split(' ').slice(0, 3)
-    ].filter(Boolean).join(' ');
-    
-    handleSearch(keywords);
+    // Create a similarity search query from the product title
+    const keywords = product.title.split(' ').slice(0, 4).join(' ');
+    handleSearch(`similar to ${keywords}`);
   }, [handleSearch]);
 
   const toggleDebugMode = useCallback((enabled: boolean) => {
@@ -99,7 +123,7 @@ export default function Home() {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
             Fashion Search
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-800 mb-8 max-w-2xl mx-auto">
             Discover your perfect style with AI-powered fashion search
           </p>
           
@@ -116,9 +140,31 @@ export default function Home() {
           {searchState.query && (
             <div className="max-w-7xl mx-auto">
               <ProductGrid 
-                products={searchState.results}
+                products={searchState.results.map(p => ({
+                  // Convert vNext results to legacy format for existing component
+                  parent_asin: p.id,
+                  title: p.title,
+                  main_category: 'Fashion',
+                  store: undefined,
+                  images: p.image ? [{ hi_res: p.image }] : [],
+                  price: p.price?.toString(),
+                  rating: p.rating,
+                  rating_number: p.ratingCount,
+                  features: [],
+                  details: {},
+                  categories: [],
+                  description: [],
+                  similarity_score: p.match.final,
+                  rank: searchState.results.indexOf(p) + 1
+                }))}
                 loading={searchState.loading}
-                onProductClick={handleProductClick}
+                onProductClick={(product) => {
+                  // Find the original vNext product
+                  const vNextProduct = searchState.results.find(p => p.id === product.parent_asin);
+                  if (vNextProduct) {
+                    handleProductClick(vNextProduct);
+                  }
+                }}
                 showDebug={searchState.debugMode}
               />
             </div>
@@ -127,14 +173,14 @@ export default function Home() {
           {!searchState.query && !searchState.loading && (
             <div className="text-center py-16 px-4">
               <div className="text-gray-400 text-8xl mb-8">👗</div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-4">
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4">
                 Start your fashion journey
               </h2>
-              <p className="text-gray-500 text-lg mb-8 max-w-md mx-auto">
+              <p className="text-gray-700 text-lg mb-8 max-w-md mx-auto">
                 Search for clothing, accessories, or describe your style to find the perfect match
               </p>
               <div className="flex flex-wrap justify-center gap-2 text-sm">
-                <span className="text-gray-400">Try:</span>
+                <span className="text-gray-600">Try:</span>
                 {['vintage dresses', 'casual sneakers', 'formal shirts', 'summer accessories'].map((term) => (
                   <button
                     key={term}
@@ -150,7 +196,7 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className="text-center py-8 px-4 text-gray-500 text-sm">
+        <footer className="text-center py-8 px-4 text-gray-700 text-sm">
           <p>Fashion Search Demo - Built with Next.js, TypeScript & Tailwind CSS</p>
           {searchState.debugMode && (
             <p className="mt-2 text-blue-600">Debug mode active - Use Cmd/Ctrl+D to toggle</p>
@@ -159,13 +205,34 @@ export default function Home() {
       </div>
 
       {/* Product Modal */}
-      <ProductModal
-        product={selectedProduct}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onFindSimilar={handleFindSimilar}
-        showDebug={searchState.debugMode}
-      />
+      {selectedProduct && (
+        <ProductModal
+          product={{
+            parent_asin: selectedProduct.id,
+            title: selectedProduct.title,
+            main_category: 'Fashion',
+            store: undefined,
+            images: selectedProduct.image ? [{ hi_res: selectedProduct.image }] : [],
+            price: selectedProduct.price?.toString(),
+            rating: selectedProduct.rating,
+            rating_number: selectedProduct.ratingCount,
+            features: [`Match Score: ${selectedProduct.match.final.toFixed(3)}`],
+            details: { 
+              'Semantic Score': selectedProduct.match.semantic.toFixed(3),
+              'Rating Score': selectedProduct.match.rating.toFixed(3),
+              'Lambda Used': selectedProduct.match.lambda_used.toFixed(3)
+            },
+            categories: [],
+            description: selectedProduct.match.explanation ? [selectedProduct.match.explanation] : [],
+            similarity_score: selectedProduct.match.final,
+            rank: searchState.results.indexOf(selectedProduct) + 1
+          }}
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onFindSimilar={() => handleFindSimilar(selectedProduct)}
+          showDebug={searchState.debugMode}
+        />
+      )}
 
       {/* Debug Toggle */}
       <DebugToggle

@@ -30,7 +30,8 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
             placeholder="Search for fashion items... (e.g., 'blue shirts', 'running shoes')"
             className="w-full pl-4 pr-12 py-4 text-lg border-2 border-gray-300 rounded-full 
                      focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none
-                     bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-200
+                     bg-white backdrop-blur-sm shadow-lg transition-all duration-200
+                     text-gray-900 placeholder-gray-500
                      disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           />
@@ -61,8 +62,9 @@ export default function SearchBar({ onSearch, loading, initialQuery = '' }: Sear
                 onSearch(suggestion);
               }}
               disabled={loading}
-              className="px-3 py-1 text-sm bg-white/70 backdrop-blur-sm border border-gray-300 
-                       rounded-full hover:bg-white/90 hover:border-blue-300 transition-all duration-200
+              className="px-3 py-1 text-sm bg-white backdrop-blur-sm border border-gray-300 
+                       rounded-full hover:bg-white hover:border-blue-300 transition-all duration-200
+                       text-gray-700 hover:text-gray-900
                        disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {suggestion}

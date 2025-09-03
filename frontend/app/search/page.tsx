@@ -5,8 +5,6 @@ import {
   ChatSearchResponse, 
   ProductResultVNext, 
   SearchStateVNext, 
-  AgentDecision,
-  FacetGroup,
   FollowupPrompt
 } from '../../lib/types';
 import SearchBar from '../../components/SearchBar';
@@ -153,7 +151,7 @@ export default function SearchPage() {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
             Fashion Search vNext
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-800 mb-8 max-w-2xl mx-auto">
             Enhanced AI search with intent classification and image-enriched embeddings
           </p>
           
@@ -180,13 +178,13 @@ export default function SearchPage() {
                     )}
                   </div>
                   {searchState.debug && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-700">
                       {searchState.debug.timings?.total?.toFixed(0)}ms
                     </span>
                   )}
                 </div>
                 {searchState.agent.reason && (
-                  <p className="text-sm text-gray-600 mt-2">{searchState.agent.reason}</p>
+                  <p className="text-sm text-gray-700 mt-2">{searchState.agent.reason}</p>
                 )}
               </div>
             </div>
@@ -276,14 +274,14 @@ export default function SearchPage() {
             {!searchState.query && !searchState.loading && (
               <div className="text-center py-16 px-4">
                 <div className="text-gray-400 text-8xl mb-8">🔍</div>
-                <h2 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-4">
-                  Try the enhanced search experience
-                </h2>
-                <p className="text-gray-500 text-lg mb-8 max-w-md mx-auto">
-                  Our vNext API features intent classification, Bayesian ranking, and image-enriched embeddings
-                </p>
-                <div className="flex flex-wrap justify-center gap-2 text-sm">
-                  <span className="text-gray-400">Try:</span>
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4">
+                Try the enhanced search experience
+              </h2>
+              <p className="text-gray-700 text-lg mb-8 max-w-md mx-auto">
+                Our vNext API features intent classification, Bayesian ranking, and image-enriched embeddings
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 text-sm">
+                <span className="text-gray-600">Try:</span>
                   {['blue casual shirt', 'running shoes under $100', 'work clothes', 'summer dress'].map((term) => (
                     <button
                       key={term}
@@ -300,7 +298,7 @@ export default function SearchPage() {
         </main>
 
         {/* Footer */}
-        <footer className="text-center py-8 px-4 text-gray-500 text-sm">
+        <footer className="text-center py-8 px-4 text-gray-700 text-sm">
           <p>Fashion Search vNext - Enhanced with Intent Classification & Bayesian Ranking</p>
           {searchState.debugMode && (
             <div className="mt-2 space-y-1">

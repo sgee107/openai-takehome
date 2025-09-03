@@ -16,15 +16,10 @@ Analyze this fashion search query and return a JSON response with:
     "complexity": 1 | 2 | 3,
     "reason": "brief explanation of classification",
     "parsed": {{
-        "terms": ["key", "search", "terms"],
-        "category": "clothing category if mentioned",
+        "category": "clothing category if mentioned (e.g., dress, shoes, shirt)",
         "brand": "brand name if mentioned", 
-        "colors": ["colors", "if", "mentioned"],
         "price_min": number or null,
-        "price_max": number or null,
-        "size": "size if mentioned",
-        "gender": "men/women/kids if mentioned",
-        "occasion": "work/casual/formal if mentioned"
+        "price_max": number or null
     }}
 }}
 

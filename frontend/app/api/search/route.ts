@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       try {
         const errorData = await backendResponse.json();
         errorMessage = errorData.detail || errorMessage;
-      } catch (e) {
+      } catch {
         // Ignore JSON parsing errors for error responses
       }
       
@@ -65,18 +65,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Frontend] API error:', error);
     
     // Handle specific error types
-    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+    if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
       return NextResponse.json(
         { error: 'Request timeout - please try again' },
         { status: 504 }
       );
     }
     
-    if (error.code === 'ECONNREFUSED') {
+    if (error instanceof Error && 'code' in error && error.code === 'ECONNREFUSED') {
       return NextResponse.json(
         { error: 'Backend service unavailable' },
         { status: 503 }

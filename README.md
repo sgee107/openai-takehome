@@ -1,5 +1,7 @@
 # Takehome Application
 
+Application made for OpenAI takehome test
+
 ## Project Setup
 
 Get up and running with the application in just a few steps.
@@ -9,7 +11,75 @@ Get up and running with the application in just a few steps.
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 - [Docker](https://www.docker.com/) and Docker Compose
 
-### Development Setup
+### Initial Setup
+
+Use this initial setup for running test
+
+#### 1. Copy .env.example to .env
+
+```bash
+cp .env.example .env
+```
+
+#### 2. Add in your OPENAI_API_KEY to the .env file
+OPENAI_API_KEY=sk-your-key-here
+
+#### 3. Run docker compose up
+
+```bash
+docker compose up
+```
+
+#### 4. You are free to run tests!
+
+Use curl to hit the api or navigate to localhost:3000 to play with the frontend
+
+## Sample Usage
+
+### Quick Test Questions
+
+Test the search functionality with these sample questions based on the dataset:
+
+#### Simple Search Queries
+1. "Show me blue socks for men"
+2. "I need palazzo pants for women"
+3. "Find girls' dresses size 9-10"
+4. "Looking for compression sleeves"
+5. "Show me vintage style dresses"
+
+#### Color & Style Searches
+6. "I want navy blue clothing"
+7. "Find burgundy colored items"
+8. "Show me tie dye sweatshirts"
+9. "Looking for gold jewelry"
+10. "Find silver accessories"
+
+### Testing via Terminal
+
+To test these questions via terminal, you can use curl commands:
+
+```bash
+# Test a simple search query
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Show me blue socks for men"}'
+
+# Test a complex search query
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Find high-rated compression gear"}'
+
+# Test with specific parameters
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Looking for navy blue clothing", "limit": 5}'
+```
+
+### Testing via API Documentation
+
+Alternatively, visit `http://localhost:8000/docs` and use the interactive API documentation to test these queries directly in your browser.
+
+## Developer Setup
 
 #### 1. Start Infrastructure Services
 
@@ -71,7 +141,7 @@ uv run pytest
 docker compose -f docker-compose-dev.yml down
 ```
 
-## Sample usage
+
 
 
 
@@ -91,6 +161,7 @@ Given the time and overall complexity with creating a production solution, I mad
 10) In an ideal world I'd continue to beef up the data pipeline. Think the abstractions there could use a lot of work to pipeline and clean up.
 11) I created a frontend just for kicks. Figured with NextJS it would be nice to have a skeleton rendered while waiting for the search agent to come to a decision.
 12) Streaming wasn't allowed without adding a credit card to the candidate project, so there's no streaming of information as it comes in.
+13) I just made a pretty straight forward agentic workflow where I had one master tool being called for now. This could be split up, in particular given the intent at the top, we could offer different types of searches or limits based on the query. We could also have the agent be able to conversate and return multiple types of outputs by using different tools down the line.
 
 
 **Note**: I did use Cline + OpenAI & Codex for implementation, I have a few implementation plans I saved in the `/docs` for your records.

@@ -1,1 +1,0 @@
-"""Services for the Chat Search API vNext implementation."""

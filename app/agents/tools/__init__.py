@@ -2,7 +2,7 @@
 Tools for the fashion agent.
 """
 
-from .search import SemanticSearchTool
+from .comprehensive_search import ComprehensiveSearchTool
 from .image_extraction import (
     extract_enhanced_fashion_analysis,
     extract_simple_fashion_analysis,
@@ -13,7 +13,7 @@ from .image_extraction import (
 )
 
 __all__ = [
-    "SemanticSearchTool",
+    "ComprehensiveSearchTool",
     "extract_enhanced_fashion_analysis",
     "extract_simple_fashion_analysis", 
     "store_image_analysis",

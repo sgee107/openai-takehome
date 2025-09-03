@@ -22,13 +22,24 @@ class SearchRequest(BaseModel):
 
 class ParsedQuery(BaseModel):
     """Structured query parsing results."""
-    terms: Optional[List[str]] = Field(None, description="Key search terms")
     category: Optional[str] = Field(None, description="Product category")
     brand: Optional[str] = Field(None, description="Brand name")
-    colors: Optional[List[str]] = Field(None, description="Color filters")
     price_min: Optional[float] = Field(None, description="Minimum price")
     price_max: Optional[float] = Field(None, description="Maximum price")
-    filters: Optional[Dict[str, Any]] = Field(None, description="Additional filters")
+    
+    def get_price_filters(self, product_model):
+        """Get database filter conditions for price constraints."""
+        conditions = []
+        if self.price_min is not None:
+            conditions.append(product_model.price >= self.price_min)
+        if self.price_max is not None:
+            conditions.append(product_model.price <= self.price_max)
+        return conditions
+    
+    @property
+    def has_price_filter(self) -> bool:
+        """Check if any price constraints are specified."""
+        return self.price_min is not None or self.price_max is not None
 
 
 class AgentDecision(BaseModel):
