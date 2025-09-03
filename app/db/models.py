@@ -44,6 +44,26 @@ class ProductImage(Base):
     
     # Relationships
     product: Mapped[Product] = relationship("Product", back_populates="images")
+    analyses: Mapped[list["ProductImageAnalysis"]] = relationship("ProductImageAnalysis", back_populates="image", cascade="all, delete-orphan")
+
+
+class ProductImageAnalysis(Base):
+    __tablename__ = "product_image_analysis"
+    __table_args__ = (
+        UniqueConstraint('image_id', 'prompt_version', name='_image_prompt_uc'),
+    )
+    
+    image_id: Mapped[int] = mapped_column(ForeignKey("product_images.id"), index=True)
+    prompt_version: Mapped[str] = mapped_column(String(50), index=True, default="v1")
+    
+    # Analysis results and metadata
+    analysis_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, index=True)
+    model: Mapped[str] = mapped_column(String(50), default="gpt-4o-mini")
+    analyzed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    image: Mapped[ProductImage] = relationship("ProductImage", back_populates="analyses")
 
 
 class ProductVideo(Base):

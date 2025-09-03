@@ -45,9 +45,16 @@ class MLflowClient:
             
             # Set up S3/MinIO environment for artifacts
             protocol = "https" if settings.minio_secure else "http"
-            os.environ.setdefault("MLFLOW_S3_ENDPOINT_URL", f"{protocol}://{settings.minio_endpoint}")
-            os.environ.setdefault("AWS_ACCESS_KEY_ID", settings.minio_access_key)
-            os.environ.setdefault("AWS_SECRET_ACCESS_KEY", settings.minio_secret_key)
+            os.environ["MLFLOW_S3_ENDPOINT_URL"] = f"{protocol}://{settings.minio_endpoint}"
+            os.environ["AWS_ACCESS_KEY_ID"] = settings.minio_access_key
+            os.environ["AWS_SECRET_ACCESS_KEY"] = settings.minio_secret_key
+            
+            # Also set for boto3/S3 compatibility
+            os.environ["AWS_DEFAULT_REGION"] = "us-east-1"  # MinIO doesn't use regions but boto3 requires it
+            
+            # Debug print to verify credentials
+            print(f"  → MinIO endpoint: {os.environ['MLFLOW_S3_ENDPOINT_URL']}")
+            print(f"  → MinIO access key: {settings.minio_access_key}")
             
             # Create MinIO bucket if needed
             self._ensure_bucket_exists()

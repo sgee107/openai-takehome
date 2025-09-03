@@ -40,3 +40,13 @@ Working on the prompts and agent tools now. Would normally add the prompts as a 
 Now data loading is working the way I want with just the title of the data, let's try out some queries and see how things are looking.
 
 Set up MLFlow w/ a basic setup locally so that we can test some of the different embeddings. Should start there.
+
+I've done some baseline experimentation looking at the data and have a few graphs, will store those for later. Basically, I need to beef up the embeddings a bit. 
+
+There are three real problems here to actually solve, the rest is just kind of fluff:
+1) How are you using the metadata to create embeddings rich enough to use for semantic search?
+2) When you do a search for information, how do you include the average rating of the product in the overall score?
+3) How are you setting up your API? What things need to be interpreted (eg. filters to slot fill, rating boosters)
+
+
+I'm going to start w/ 1 and think through some of the implications of 2. 3 is just a little bit of a grind, create a representative test set (100 queries or something), test that you are getting the output you want, almost NER style.

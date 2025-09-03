@@ -16,6 +16,17 @@ from dotenv import load_dotenv
 from app.db.database import AsyncSessionLocal, init_db
 from app.db.models import Product, ProductImage, ProductVideo, ProductEmbedding
 from app.settings import settings
+from app.agents.tools.image_extraction import (
+    extract_enhanced_fashion_analysis,
+    store_image_analysis,
+    enhance_product_text_with_analysis
+)
+from app.scripts.structured_text_strategies import (
+    KeyValueBasicStrategy,
+    KeyValueDetailedStrategy,
+    KeyValueWithImagesStrategy,
+    ComprehensiveKeyValueStrategy
+)
 
 load_dotenv()
 
@@ -160,18 +171,31 @@ class TextStrategy:
 class ProductLoader:
     """Load products using SQLAlchemy models with multiple embedding strategies."""
     
+    # Initialize key-value strategy instances
+    KEY_VALUE_BASIC = KeyValueBasicStrategy()
+    KEY_VALUE_DETAILED = KeyValueDetailedStrategy()
+    KEY_VALUE_WITH_IMAGES = KeyValueWithImagesStrategy()
+    KEY_VALUE_COMPREHENSIVE = ComprehensiveKeyValueStrategy()
+    
     # Define all strategies to generate
     STRATEGIES = {
+        # Original strategies
         'title_only': TextStrategy.title_only,
         'title_features': TextStrategy.title_features,
         'title_category_store': TextStrategy.title_category_store,
         'title_details': TextStrategy.title_details,
-        'comprehensive': TextStrategy.comprehensive
+        'comprehensive': TextStrategy.comprehensive,
+        # New key-value strategies
+        'key_value_basic': KEY_VALUE_BASIC.generate,
+        'key_value_detailed': KEY_VALUE_DETAILED.generate,
+        'key_value_with_images': KEY_VALUE_WITH_IMAGES.generate,
+        'key_value_comprehensive': KEY_VALUE_COMPREHENSIVE.generate
     }
     
     def __init__(self, session: AsyncSession):
         self.session = session
         self.embedding_generator = EmbeddingGenerator()
+        self.openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
     
     async def load_product(self, product_data: Dict[str, Any]) -> Optional[Product]:
         """Load a single product without embeddings."""
@@ -228,12 +252,84 @@ class ProductLoader:
             print(f"Error loading product: {e}")
             return None
     
+    async def analyze_product_images(self, product: Product) -> Optional[Any]:
+        """Analyze the first high-quality image of a product using OpenAI vision."""
+        if not product.images:
+            return None
+        
+        # Use the first image with a large URL
+        target_image = None
+        for image in product.images:
+            if image.large:
+                target_image = image
+                break
+        
+        if not target_image:
+            return None
+        
+        try:
+            print(f"    🎯 [API CALL #{getattr(self, '_api_call_count', 0) + 1}] Analyzing image for: {product.title[:40]}...")
+            self._api_call_count = getattr(self, '_api_call_count', 0) + 1
+            
+            # Extract fashion analysis
+            analysis = await extract_enhanced_fashion_analysis(
+                image_url=target_image.large,
+                client=self.openai_client,
+                prompt_version="v1"
+            )
+            
+            if analysis and analysis.confidence > 0.5:
+                # Store the analysis in database
+                await store_image_analysis(
+                    session=self.session,
+                    image=target_image,
+                    analysis=analysis,
+                    prompt_version="v1"
+                )
+                print(f"    ✅ [API CALL #{self._api_call_count}] Image analysis completed (confidence: {analysis.confidence:.2f})")
+                return analysis
+            else:
+                print(f"    ⚠️ [API CALL #{self._api_call_count}] Low confidence analysis (confidence: {analysis.confidence:.2f})")
+                return None
+                
+        except Exception as e:
+            print(f"    ❌ [API CALL #{self._api_call_count}] Error analyzing image: {e}")
+            return None
+
     async def generate_embeddings_for_product(self, product: Product, product_data: Dict[str, Any]):
-        """Generate all embedding strategies for a product."""
+        """Generate all embedding strategies for a product, with optional image analysis."""
+        # First, analyze images if available
+        image_analysis = None
+        print(f"🔍 Checking product images for {product.title[:40]}...")
+        print(f"    Product has {len(product.images)} images")
+        
+        if product.images:
+            print(f"    🎯 Calling image analysis...")
+            image_analysis = await self.analyze_product_images(product)
+            if image_analysis:
+                print(f"    ✅ Image analysis successful with confidence {image_analysis.confidence:.2f}")
+            else:
+                print(f"    ❌ Image analysis failed or returned None")
+        else:
+            print(f"    ⚠️ No images found for product")
+        
         for strategy_name, strategy_func in self.STRATEGIES.items():
             try:
                 # Generate text for this strategy
-                embedding_text = strategy_func(product_data)
+                # Pass image analysis to strategies that can use it
+                if strategy_name == 'key_value_with_images' and hasattr(strategy_func, '__call__'):
+                    print(f"    📝 Processing {strategy_name} strategy...")
+                    # Check if strategy accepts image_analysis parameter
+                    import inspect
+                    sig = inspect.signature(strategy_func)
+                    if 'image_analysis' in sig.parameters:
+                        print(f"    🔗 Passing image analysis to {strategy_name}")
+                        embedding_text = strategy_func(product_data, image_analysis=image_analysis)
+                    else:
+                        print(f"    ⚠️ Strategy {strategy_name} doesn't accept image_analysis parameter")
+                        embedding_text = strategy_func(product_data)
+                else:
+                    embedding_text = strategy_func(product_data)
                 
                 if not embedding_text:
                     continue
