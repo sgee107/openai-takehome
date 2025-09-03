@@ -128,18 +128,9 @@ class RetrievalService:
             for row in rows:
                 embedding_record, product, similarity = row
                 
-                # Extract image URLs from product data
+                # Images will be loaded separately if needed
+                # Avoid lazy loading in async context
                 images = []
-                if hasattr(product, 'images') and product.images:
-                    if isinstance(product.images, list):
-                        images = product.images
-                    elif isinstance(product.images, str):
-                        # Handle JSON string if stored as text
-                        try:
-                            import json
-                            images = json.loads(product.images)
-                        except:
-                            images = []
                 
                 candidates.append(Candidate(
                     product_id=product.id,
